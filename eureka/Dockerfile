@@ -7,5 +7,5 @@ add server.xml /opt/tomcat/conf/server.xml
 
 expose 80
 
-cmd ["/opt/tomcat/bin/catalina.sh", "run"]
+cmd /opt/tomcat/bin/start
 
