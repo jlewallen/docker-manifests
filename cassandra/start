@@ -1,5 +1,8 @@
 #!/bin/bash
 
+echo $CASS_SEEDS
+echo $CASS_TOKEN
+
 HOST=`hostname`
 echo "127.0.0.1 $HOST" >> /etc/hosts
 
