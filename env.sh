@@ -12,9 +12,6 @@ get_next_ip() {
 	echo $baseaddr.$new_number
 }
 
-new_address=$(get_next_ip "192.168.0.200" 2)
-echo $new_address
-
 if [[ $EUID -ne 0 ]]; then
    echo "This script must be run as root" 1>&2
    exit 1

@@ -1,0 +1,12 @@
+#!/bin/bash
+
+source env.sh
+
+IP1=$(get_next_ip "192.168.0.200" 1)
+IP2=$(get_next_ip "192.168.0.200" 2)
+
+C1=$(docker run -d -p 4444 base /bin/nc -l -p 4444)
+C2=$(docker run -d -p 4444 base /bin/nc -l -p 4444)
+
+./unionize.sh $PUBLIC_BRIDGE $C1 $IP1
+./unionize.sh $PUBLIC_BRIDGE $C2 $IP2

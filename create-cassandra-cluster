@@ -1,0 +1,13 @@
+#!/bin/bash
+
+source env.sh
+
+CASS1=$(get_next_ip "192.168.0.200" 11)
+CASS2=$(get_next_ip "192.168.0.200" 12)
+CASS_SEEDS="$CASS1,$CASS2"
+
+C1=$(docker run -d -e "CASS_SEEDS=$CASS_SEEDS" jlewallen/cassandra)
+C2=$(docker run -d -e "CASS_SEEDS=$CASS_SEEDS" jlewallen/cassandra)
+
+./unionize.sh $PUBLIC_BRIDGE $C1 $CASS1
+./unionize.sh $PUBLIC_BRIDGE $C2 $CASS2
