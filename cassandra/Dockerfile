@@ -3,7 +3,7 @@ from jlewallen/base
 maintainer Jacob Lewallen
 
 run mkdir -p /opt
-run cd /opt && wget http://apache.mirrors.hoobly.com/cassandra/1.2.7/apache-cassandra-1.2.7-bin.tar.gz 
+run cd /opt && wget http://apache.mirrors.hoobly.com/cassandra/1.2.8/apache-cassandra-1.2.8-bin.tar.gz 
 run cd /opt && tar zxf apache-cassandra-*.tar.gz
 run rm /opt/*.tar.gz
 run mv /opt/apache-cassandra-* /opt/cassandra
@@ -20,5 +20,5 @@ expose 8888
 expose 9160
 expose 9042
 
-cmd /opt/cassandra/bin/start
+entrypoint /opt/cassandra/bin/start
 

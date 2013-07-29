@@ -6,4 +6,5 @@ add nginx-default /etc/nginx/sites-available/default
 
 expose 80
 
-cmd ["/usr/sbin/nginx", "-g", "daemon off;"]
+entrypoint /usr/sbin/nginx
+cmd ["-g", "daemon off;"]
