@@ -49,5 +49,7 @@ chang eon you less.
 	#       dns-nameservers <name server IP address here, e.g. 192.168.1.1>
 	#       dns-search your.search.domain.here
 
+Make sure that the network interface on your VM has promiscuous mode enabled.
+
 Running
 =======
