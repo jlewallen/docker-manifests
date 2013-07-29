@@ -1,3 +1,20 @@
+The Idea
+========
+
+The basic idea is a development VM that emulates a collection of cloud machines
+for development. A single VM hosts a collection of Docker containers for
+various services, and exposes them as individual machines to the local
+network/developer machine. Docker containers for the following are planned:
+
+* Apache Cassandra (N sized cluster and single node)
+* Apache Tomcat
+* netflix/eureka
+  
+I'd also like to see a web UI for starting/stopping/updating various services
+and providing easy access to configuration. This will be especially important
+once developers need to spin up instances of their own services from artifacts
+in Nexus or elsewhere.
+
 Host Setup
 ==========
 
