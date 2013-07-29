@@ -8,6 +8,7 @@ echo $CASS_LOCAL_IP
 sed -i "s/{{INITIAL_TOKEN}}/$CASS_TOKEN/g" /opt/cassandra/conf/cassandra.yaml
 sed -i "s/{{SEEDS}}/$CASS_SEEDS/g" /opt/cassandra/conf/cassandra.yaml
 sed -i "s/{{LOCAL_IP}}/$CASS_LOCAL_IP/g" /opt/cassandra/conf/cassandra.yaml
+sed -i "s/{{LOCAL_IP}}/$CASS_LOCAL_IP/g" /opt/cassandra/conf/cassandra-env.sh
 
 HOST=`hostname`
 echo "127.0.0.1 $HOST" >> /etc/hosts
