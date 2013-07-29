@@ -1,0 +1,25 @@
+{
+	"eureka" : [{
+		"image": "jlewallen/eureka",
+		"ip" : "192.168.0.200",
+		"env" : {}
+	}],
+	
+	"cassandra" : [{
+		"image": "jlewallen/cassandra",
+		"ip" : "192.168.0.211",
+		"env" : {
+			"CASS_SEEDS" : "192.168.0.211",
+			"CASS_TOKEN" : "0",
+			"CASS_LOCAL_IP" : "192.168.0.211"
+		}
+	}, {
+		"image": "jlewallen/cassandra",
+		"ip" : "192.168.0.212",
+		"env" : {
+			"CASS_SEEDS" : "192.168.0.211",
+			"CASS_TOKEN" : "-9223372036854775808",
+			"CASS_LOCAL_IP" : "192.168.0.212"
+		}
+	}]
+}

@@ -1,0 +1,128 @@
+#!/usr/bin/python
+#
+#
+
+import sys
+import json
+import docker.client
+import random
+import time
+import subprocess
+import os
+import string
+import logging
+from urlparse import urlparse
+
+def new_id(size=6, chars=string.ascii_uppercase + string.digits):
+	return ''.join(random.choice(chars) for x in range(size))
+
+class Configuration:
+	def __init__(self):
+		self.cfg = json.load(open('settings.json'))
+
+	def get_offset_ip(offset):
+		None
+
+class Instance:
+	def __init__(self, name, cfg):
+		self.name = name
+		self.cfg = cfg
+
+	def short_id(self):
+		return self.cfg.get('container')
+
+	def is_running(self, docker):
+		if self.short_id() is None:
+			return False
+            	details = docker.inspect_container(self.short_id())
+                return details["State"]["Running"]
+
+	def provision(self, docker):
+		if self.is_running(docker):
+			print "%s: skipping, %s is running" % (self.name, self.short_id())
+			return self.short_id()
+
+		print "%s: starting instance" % (self.name)
+ 		params = { 'image':        self.cfg['image'],
+			   'command':      self.cfg.get('command'),
+			   'ports':        self.cfg.get('ports'),
+			   'environment':  self.cfg.get('env'),
+			   'detach':       True,
+		          }
+		container = docker.create_container(**params)
+		short_id = container['Id']
+		details = docker.inspect_container(short_id)
+		long_id = details['ID']
+		docker.start(short_id)
+
+		# this is all kinds of race condition prone, too bad we
+		# can't do this before we start the container
+		self.configure_networking(short_id, long_id, "br0", self.cfg['ip'])
+		print "%s: instance started %s" % (self.name, short_id)
+		self.cfg['container'] = short_id
+		return short_id
+
+	def configure_networking(self, short_id, long_id, bridge, ip):
+		iface_suffix = new_id()
+		iface_local_name = "pvnetl%s" % iface_suffix
+		iface_remote_name = "pvnetr%s" % iface_suffix
+
+		# poll for the file, it'll be created when the container starts
+		# up and we should spend very little time waiting
+		while True:
+			try:
+				npsid = open("/sys/fs/cgroup/devices/lxc/" + long_id + "/tasks", "r").readline().strip()
+				break
+			except IOError:
+				print "%s: waiting for container %s cgroup" % (self.name, short_id)
+				time.sleep(0.1)
+
+		print "%s: configuring %s networking, assigning %s" % (self.name, short_id, ip)
+
+		# strategy from unionize.sh
+        	commands = [
+			"mkdir -p /var/run/netns",
+        		"rm -f /var/run/netns/%s" % long_id,
+        		"ln -s /proc/%s/ns/net /var/run/netns/%s" % (npsid, long_id),
+        		"ip link add name %s type veth peer name %s" % (iface_local_name, iface_remote_name),
+        		"brctl addif %s %s" % (bridge, iface_local_name),
+        		"ifconfig %s up" % (iface_local_name),
+        		"ip link set %s netns %s" % (iface_remote_name, npsid),
+        		"ip netns exec %s ip link set %s name eth1" % (long_id, iface_remote_name),
+        		"ip netns exec %s ifconfig eth1 %s" % (long_id, ip)
+		]
+		for command in commands:
+			if os.system(command) != 0:
+				raise Exception("Error configuring networking: '%s' failed!" % command)
+
+class Manifest:
+	def __init__(self, path):
+		self.path = path
+		self.cfg = json.load(open(self.path))
+
+	def provision(self, docker):
+		for name in self.cfg:
+			index = 0
+			for instance in self.cfg[name]:
+				instance_name = "%s-%d" % (name, index)
+				instance = Instance(instance_name, instance)
+				instance.provision(docker)
+				index = index + 1
+
+	def save(self):
+		json.dump(self.cfg, open(self.path, "w"), sort_keys=True, indent=4, separators=(',', ': '))
+
+def open_docker():
+	docker_url = urlparse("http://127.0.0.1:4243")
+	return docker.Client(base_url = docker_url.geturl())
+	
+def main():
+	docker = open_docker()
+	for each in docker.containers():
+		details = docker.inspect_container(each['Id'])
+
+	manifest = Manifest("manifest-test.json")
+	manifest.provision(docker)
+	manifest.save()
+
+main()
