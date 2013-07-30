@@ -10,7 +10,7 @@ import time
 import subprocess
 import os
 import string
-import logging
+import optparse
 from urlparse import urlparse
 
 def new_id(size=6, chars=string.ascii_uppercase + string.digits):
@@ -34,8 +34,19 @@ class Instance:
 	def is_running(self, docker):
 		if self.short_id() is None:
 			return False
-            	details = docker.inspect_container(self.short_id())
-                return details["State"]["Running"]
+		try:
+			details = docker.inspect_container(self.short_id())
+			return details["State"]["Running"]
+		except:
+			return False
+
+	def make_params(self):
+ 		return { 'image':        self.cfg['image'],
+			 'command':      self.cfg.get('command'),
+			 'ports':        self.cfg.get('ports'),
+			 'environment':  self.cfg.get('env'),
+			 'detach':       True,
+		        }
 
 	def provision(self, docker):
 		if self.is_running(docker):
@@ -43,13 +54,7 @@ class Instance:
 			return self.short_id()
 
 		print "%s: starting instance" % (self.name)
- 		params = { 'image':        self.cfg['image'],
-			   'command':      self.cfg.get('command'),
-			   'ports':        self.cfg.get('ports'),
-			   'environment':  self.cfg.get('env'),
-			   'detach':       True,
-		          }
-		container = docker.create_container(**params)
+		container = docker.create_container(**self.make_params())
 		short_id = container['Id']
 		details = docker.inspect_container(short_id)
 		long_id = details['ID']
@@ -91,38 +96,74 @@ class Instance:
         		"ip netns exec %s ip link set %s name eth1" % (long_id, iface_remote_name),
         		"ip netns exec %s ifconfig eth1 %s" % (long_id, ip)
 		]
+
 		for command in commands:
 			if os.system(command) != 0:
 				raise Exception("Error configuring networking: '%s' failed!" % command)
+
+	def stop(self, docker):
+		if self.is_running(docker):
+			print "%s: stopping %s" % (self.name, self.short_id())
+			docker.stop(self.short_id())
+			return self.short_id()
+
+	def kill(self, docker):
+		if self.is_running(docker):
+			print "%s: killing %s" % (self.name, self.short_id())
+			docker.kill(self.short_id())
+			return self.short_id()
 
 class Manifest:
 	def __init__(self, path):
 		self.path = path
 		self.cfg = json.load(open(self.path))
 
-	def provision(self, docker):
+	def apply(self, docker, callback):
 		for name in self.cfg:
-			index = 0
-			for instance in self.cfg[name]:
+			for index, instance in enumerate(self.cfg[name]):
 				instance_name = "%s-%d" % (name, index)
-				instance = Instance(instance_name, instance)
-				instance.provision(docker)
-				index = index + 1
+				callback(Instance(instance_name, instance), docker)
+	
+	def provision(self, docker):
+		self.apply(docker, lambda instance, docker: instance.provision(docker))
 
+	def stop(self, docker):
+		self.apply(docker, lambda instance, docker: instance.stop(docker))
+	
+	def kill(self, docker):
+		self.apply(docker, lambda instance, docker: instance.kill(docker))
+	
 	def save(self):
 		json.dump(self.cfg, open(self.path, "w"), sort_keys=True, indent=4, separators=(',', ': '))
 
-def open_docker():
+class Options:
+	def __init__(self, entries): 
+		self.__dict__.update(entries)	
+
+def get_docker():
 	docker_url = urlparse("http://127.0.0.1:4243")
 	return docker.Client(base_url = docker_url.geturl())
-	
+
+def get_options():
+	parser = optparse.OptionParser()
+	parser.add_option("--stop", action="store_true", dest="stop", default=False, help="stop instances")
+	parser.add_option("--kill", action="store_true", dest="kill", default=False, help="kill instances")
+	raw_options, args = parser.parse_args()
+	return Options(vars(raw_options))
+
 def main():
-	docker = open_docker()
+	options = get_options()
+	docker = get_docker()
 	for each in docker.containers():
 		details = docker.inspect_container(each['Id'])
 
 	manifest = Manifest("manifest-test.json")
-	manifest.provision(docker)
+	if options.stop:
+		manifest.stop(docker)
+	elif options.kill:
+		manifest.kill(docker)
+	else:
+		manifest.provision(docker)
 	manifest.save()
 
 main()
