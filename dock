@@ -152,6 +152,9 @@ def get_options():
 	return Options(vars(raw_options))
 
 def main():
+	if os.geteuid() != 0:
+		exit("You need to have root privileges to run this script.\nPlease try again, this time using 'sudo'. Exiting.")
+
 	options = get_options()
 	docker = get_docker()
 	for each in docker.containers():
