@@ -15,6 +15,7 @@
     - git-core
     - build-essential
     - python-setuptools
+    - python-pip
     - locate
     - openjdk-7-jdk
     - software-properties-common
