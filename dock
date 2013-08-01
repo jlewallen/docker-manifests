@@ -31,6 +31,15 @@ class Instance:
 	def short_id(self):
 		return self.cfg.get('container')
 
+	def exists(self, docker):
+		if self.short_id() is None:
+			return False
+		try:
+			details = docker.inspect_container(self.short_id())
+			return True
+		except:
+			return False
+		
 	def is_running(self, docker):
 		if self.short_id() is None:
 			return False
@@ -46,11 +55,16 @@ class Instance:
 			 'ports':        self.cfg.get('ports'),
 			 'environment':  self.cfg.get('env'),
 			 'detach':       True,
+			 'hostname':     self.name,
 		        }
 
 	def provision(self, docker):
-		if self.is_running(docker):
-			print "%s: skipping, %s is running" % (self.name, self.short_id())
+		if self.exists(docker):
+			if self.is_running(docker):
+				print "%s: skipping, %s is running" % (self.name, self.short_id())
+			else:
+				print "%s: %s exists, starting" % (self.name, self.short_id())
+				docker.start(self.short_id())
 			return self.short_id()
 
 		print "%s: starting instance" % (self.name)
