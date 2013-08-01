@@ -137,8 +137,9 @@ class Manifest:
 		json.dump(self.cfg, open(self.path, "w"), sort_keys=True, indent=4, separators=(',', ': '))
 
 class Options:
-	def __init__(self, entries): 
+	def __init__(self, entries, args): 
 		self.__dict__.update(entries)	
+		self.manifest = args[0]
 
 def get_docker():
 	docker_url = urlparse("http://127.0.0.1:4243")
@@ -149,18 +150,18 @@ def get_options():
 	parser.add_option("--stop", action="store_true", dest="stop", default=False, help="stop instances")
 	parser.add_option("--kill", action="store_true", dest="kill", default=False, help="kill instances")
 	raw_options, args = parser.parse_args()
-	return Options(vars(raw_options))
+	if not args:
+		exit("No manifest given.")
+	return Options(vars(raw_options), args)
 
 def main():
+	options = get_options()
+	docker = get_docker()
+
 	if os.geteuid() != 0:
 		exit("You need to have root privileges to run this script.\nPlease try again, this time using 'sudo'. Exiting.")
 
-	options = get_options()
-	docker = get_docker()
-	for each in docker.containers():
-		details = docker.inspect_container(each['Id'])
-
-	manifest = Manifest("manifest-test.json")
+	manifest = Manifest(options.manifest)
 	if options.stop:
 		manifest.stop(docker)
 	elif options.kill:
