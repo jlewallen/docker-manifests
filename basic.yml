@@ -21,6 +21,7 @@
     - software-properties-common
     - linux-image-extra-$LOOKUP(pipe,uname -r)
     - lxc-docker
+  - pip: name=flask
   - git: repo=https://github.com/dotcloud/docker-py.git dest=~/docker-py
   - shell: cd ~/docker-py && touch installed.{{version}} && sudo python setup.py install creates=~/docker-py/installed.{{version}}
   - get_url: url=https://raw.github.com/jlewallen/docker-ansible/master/docker-ansible.py dest=/usr/share/ansible/docker mode=0770
