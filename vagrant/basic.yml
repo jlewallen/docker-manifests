@@ -1,0 +1,35 @@
+
+- hosts: all
+  user: root
+  sudo: yes
+  vars:
+    version: 1
+  tasks:
+  - apt: pkg=python-software-properties state=present
+  - apt_repository: repo='ppa:dotcloud/lxc-docker'
+  - apt: update_cache=yes
+  - name: upgrade kernel
+    apt: pkg=linux-image-generic-lts-raring state=present
+    notify: reboot machine
+  - name: add package $item
+    apt: pkg=$item state=present
+    with_items:
+    - linux-image-generic-lts-raring 
+    - vim
+    - tmux
+    - git-core
+    - build-essential
+    - python-setuptools
+    - python-pip
+    - locate
+    - openjdk-7-jdk
+    - software-properties-common
+    - lxc-docker
+  - pip: name=flask
+  - git: repo=https://github.com/dotcloud/docker-py.git dest=~/docker-py
+  - shell: cd ~/docker-py && touch installed.{{version}} && sudo python setup.py install creates=~/docker-py/installed.{{version}}
+  - get_url: url=https://raw.github.com/jlewallen/docker-ansible/master/docker-ansible.py dest=/usr/share/ansible/docker mode=0770
+  handlers:
+  - name: reboot machine
+    command: /sbin/reboot
+
