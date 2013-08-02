@@ -1,8 +1,0 @@
-
-- hosts: all
-  user: root
-  sudo: no
-  vars:
-    version: 1
-  tasks:
-  - action: docker image=cove/tomcat7 command=/start-tomcat.sh ports=8080:8080
