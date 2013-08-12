@@ -5,6 +5,9 @@ import time
 import subprocess
 import os
 import string
+import iptools
+import netifaces
+import re
 
 def new_id(size=6, chars=string.ascii_uppercase + string.digits):
 	return ''.join(random.choice(chars) for x in range(size))
@@ -13,8 +16,17 @@ class Configuration:
 	def __init__(self):
 		self.cfg = json.load(open('settings.json'))
 
+	# I'm not happy with this, but the netifaces stuff was all broken for me. Gonna try later.
+	@staticmethod
+	def get_local_ip():
+		command = "ifconfig | grep 'inet addr:' | grep -v 127.0.0.1 | cut -d: -f2 | awk '{ print $1}'"
+		co = subprocess.Popen([ command ], shell = True, stdout = subprocess.PIPE)
+		ips = co.stdout.read().strip().split("\n")
+		return ips[0]
+
+	@staticmethod
 	def get_offset_ip(offset):
-		None
+		return iptools.ipv4.long2ip(iptools.ipv4.ip2long(Configuration.get_local_ip()) + offset)
 
 class Instance:
 	def __init__(self, name, cfg):
@@ -74,8 +86,15 @@ class Instance:
 		# this is all kinds of race condition prone, too bad we
 		# can't do this before we start the container
 		print "%s: configuring networking %s" % (self.name, self.short_id())
-		self.configure_networking(self.short_id(), self.long_id(docker), "br0", self.cfg['ip'])
+		self.configure_networking(self.short_id(), self.long_id(docker), "br0", self.calculate_ip())
 		return self.short_id()
+
+	def calculate_ip(self):
+		configured = self.cfg["ip"]
+		m = re.match(r"^\+(\d+)", configured)
+		if m:
+			return Configuration.get_offset_ip(int(m.group(0)))
+		return configured
 
 	def configure_networking(self, short_id, long_id, bridge, ip):
 		iface_suffix = new_id()
