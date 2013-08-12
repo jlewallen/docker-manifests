@@ -51,28 +51,31 @@ class Instance:
 			 'hostname':     self.name,
 		        }
 
+	def long_id(self, docker):
+		details = docker.inspect_container(self.short_id())
+		return details['ID']
+	
 	def provision(self, docker):
 		if self.exists(docker):
 			if self.is_running(docker):
 				print "%s: skipping, %s is running" % (self.name, self.short_id())
+				return self.short_id()
 			else:
 				print "%s: %s exists, starting" % (self.name, self.short_id())
 				docker.start(self.short_id())
-			return self.short_id()
-
-		print "%s: starting instance" % (self.name)
-		container = docker.create_container(**self.make_params())
-		short_id = container['Id']
-		details = docker.inspect_container(short_id)
-		long_id = details['ID']
-		docker.start(short_id)
+		else:
+			print "%s: creating instance" % (self.name)
+			container = docker.create_container(**self.make_params())
+			short_id = container['Id']
+			docker.start(short_id)
+			self.cfg['container'] = short_id
+			print "%s: instance started %s" % (self.name, short_id)
 
 		# this is all kinds of race condition prone, too bad we
 		# can't do this before we start the container
-		self.configure_networking(short_id, long_id, "br0", self.cfg['ip'])
-		print "%s: instance started %s" % (self.name, short_id)
-		self.cfg['container'] = short_id
-		return short_id
+		print "%s: configuring networking %s" % (self.name, self.short_id())
+		self.configure_networking(self.short_id(), self.long_id(docker), "br0", self.cfg['ip'])
+		return self.short_id()
 
 	def configure_networking(self, short_id, long_id, bridge, ip):
 		iface_suffix = new_id()
