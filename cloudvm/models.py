@@ -16,13 +16,17 @@ class Configuration:
 	def __init__(self):
 		self.cfg = json.load(open('settings.json'))
 
-	# I'm not happy with this, but the netifaces stuff was all broken for me. Gonna try later.
 	@staticmethod
 	def get_local_ip():
-		command = "ifconfig | grep 'inet addr:' | grep -v 127.0.0.1 | cut -d: -f2 | awk '{ print $1}'"
-		co = subprocess.Popen([ command ], shell = True, stdout = subprocess.PIPE)
-		ips = co.stdout.read().strip().split("\n")
-		return ips[0]
+		ips = []
+		for interface in netifaces.interfaces():
+			addresses = netifaces.ifaddresses(interface)
+			if netifaces.AF_INET in addresses:
+				for link in addresses[netifaces.AF_INET]:
+					ips.append(link['addr'])
+		for ip in ips:
+			if re.match(r"^192.168", ip): return ip
+		raise "Unable to infer IP"
 
 	@staticmethod
 	def get_offset_ip(offset):
