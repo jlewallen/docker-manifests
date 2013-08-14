@@ -101,6 +101,9 @@ class Instance:
 		          }
 		return params
 
+	def needs_ip(self):
+		return self.cfg.get('ip') is not None
+
 	def provision(self, ctx):
 		docker = ctx.docker
 		if self.exists(docker):
@@ -123,9 +126,18 @@ class Instance:
 		# can't do this before we start the container
 		print "%s: configuring networking %s" % (self.name, self.short_id)
 		self.update(ctx)
-		self.configure_networking(self.short_id, self.long_id, "br0", self.calculate_ip())
+		if self.needs_ip():
+			if self.has_host_mapping(): print "WARNING: please check your ports, ports mapped to the host won't work when assigning ips"
+			self.configure_networking(self.short_id, self.long_id, "br0", self.calculate_ip())
 		ctx.state.update(self.long_id, self)
 		return self.short_id
+
+	def has_host_mapping(self):
+		if self.cfg.get("ports") is None:
+			return False
+		for port in self.cfg.get("ports"):
+			if re.match(r"\d+:", port): return True
+		return False
 
 	def calculate_ip(self):
 		configured = self.cfg["ip"]
