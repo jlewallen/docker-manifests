@@ -8,13 +8,44 @@ import string
 import iptools
 import netifaces
 import re
+import pickle
+import docker.client
+
+from urlparse import urlparse
 
 def new_id(size=6, chars=string.ascii_uppercase + string.digits):
 	return ''.join(random.choice(chars) for x in range(size))
 
+class Context:
+	def __init__(self, docker, cfg, state):
+		self.docker = docker
+		self.cfg = cfg
+		self.state = state
+
+class State:
+	def __init__(self):
+		self.containers = {}
+
+	@staticmethod
+	def load(path):
+		if os.path.isfile(path):
+			return pickle.load(open(path))
+		return State()
+
+	def update(self, long_id, instance):
+		self.containers[long_id] = instance
+
+	def save(self, path):
+		pickle.dump(self, open(path, "wb"))
+
 class Configuration:
 	def __init__(self):
-		self.cfg = json.load(open('settings.json'))
+		None
+
+	@staticmethod
+	def get_docker():
+		docker_url = urlparse("http://127.0.0.1:4243")
+		return docker.Client(base_url = docker_url.geturl())
 
 	@staticmethod
 	def get_local_ip():
@@ -36,24 +67,24 @@ class Instance:
 	def __init__(self, name, cfg):
 		self.name = name
 		self.cfg = cfg
-
-	def short_id(self):
-		return self.cfg.get('container')
+		self.short_id = self.cfg.get('container')
+		self.long_id = None
+		self.ip = None
 
 	def exists(self, docker):
-		if self.short_id() is None:
+		if self.short_id is None:
 			return False
 		try:
-			details = docker.inspect_container(self.short_id())
+			details = docker.inspect_container(self.short_id)
 			return True
 		except:
 			return False
 		
 	def is_running(self, docker):
-		if self.short_id() is None:
+		if self.short_id is None:
 			return False
 		try:
-			details = docker.inspect_container(self.short_id())
+			details = docker.inspect_container(self.short_id)
 			return details["State"]["Running"]
 		except:
 			return False
@@ -67,31 +98,36 @@ class Instance:
 			 'hostname':     self.name,
 		        }
 
-	def long_id(self, docker):
-		details = docker.inspect_container(self.short_id())
-		return details['ID']
+	def get_long_id(self, docker):
+		if self.long_id: return self.long_id
+		details = docker.inspect_container(self.short_id)
+		self.long_id = details['ID']
+		return self.long_id
 	
-	def provision(self, docker):
+	def provision(self, ctx):
+		docker = ctx.docker
 		if self.exists(docker):
 			if self.is_running(docker):
-				print "%s: skipping, %s is running" % (self.name, self.short_id())
-				return self.short_id()
+				print "%s: skipping, %s is running" % (self.name, self.short_id)
+				return self.short_id
 			else:
-				print "%s: %s exists, starting" % (self.name, self.short_id())
-				docker.start(self.short_id())
+				print "%s: %s exists, starting" % (self.name, self.short_id)
+				docker.start(self.short_id)
 		else:
 			print "%s: creating instance" % (self.name)
 			container = docker.create_container(**self.make_params())
-			short_id = container['Id']
+			self.short_id = container['Id']
 			docker.start(short_id)
 			self.cfg['container'] = short_id
 			print "%s: instance started %s" % (self.name, short_id)
 
 		# this is all kinds of race condition prone, too bad we
 		# can't do this before we start the container
-		print "%s: configuring networking %s" % (self.name, self.short_id())
-		self.configure_networking(self.short_id(), self.long_id(docker), "br0", self.calculate_ip())
-		return self.short_id()
+		print "%s: configuring networking %s" % (self.name, self.short_id)
+		long_id = self.get_long_id(docker)
+		self.configure_networking(self.short_id, long_id, "br0", self.calculate_ip())
+		ctx.state.update(long_id, self)
+		return self.short_id
 
 	def calculate_ip(self):
 		configured = self.cfg["ip"]
@@ -134,37 +170,56 @@ class Instance:
 			if os.system(command) != 0:
 				raise Exception("Error configuring networking: '%s' failed!" % command)
 
-	def stop(self, docker):
+	def stop(self, ctx):
+		docker = ctx.docker
 		if self.is_running(docker):
-			print "%s: stopping %s" % (self.name, self.short_id())
-			docker.stop(self.short_id())
-			return self.short_id()
+			print "%s: stopping %s" % (self.name, self.short_id)
+			docker.stop(self.short_id)
+			return self.short_id
 
-	def kill(self, docker):
+	def kill(self, ctx):
+		docker = ctx.docker
 		if self.is_running(docker):
-			print "%s: killing %s" % (self.name, self.short_id())
-			docker.kill(self.short_id())
-			return self.short_id()
+			print "%s: killing %s" % (self.name, self.short_id)
+			docker.kill(self.short_id)
+			return self.short_id
+
+class Group:
+	def __init__(self, name, cfg):
+		self.name = name
+		self.cfg = cfg
+
+	def apply(self, ctx, callback):
+		for index, instance in enumerate(self.cfg):
+			instance_name = "%s-%d" % (self.name, index)
+			callback(Instance(instance_name, instance), ctx)
+	
+	def provision(self, ctx):
+		self.apply(ctx, lambda instance, ctx: instance.provision(ctx))
+
+	def stop(self, ctx):
+		self.apply(ctx, lambda instance, ctx: instance.stop(ctx))
+	
+	def kill(self, ctx):
+		self.apply(ctx, lambda instance, ctx: instance.kill(ctx))
 
 class Manifest:
 	def __init__(self, path):
 		self.path = path
 		self.cfg = json.load(open(self.path))
 
-	def apply(self, docker, callback):
+	def apply(self, ctx, callback):
 		for name in self.cfg:
-			for index, instance in enumerate(self.cfg[name]):
-				instance_name = "%s-%d" % (name, index)
-				callback(Instance(instance_name, instance), docker)
+			callback(Group(name, self.cfg[name]), ctx)
 	
-	def provision(self, docker):
-		self.apply(docker, lambda instance, docker: instance.provision(docker))
+	def provision(self, ctx):
+		self.apply(ctx, lambda group, ctx: group.provision(ctx))
 
-	def stop(self, docker):
-		self.apply(docker, lambda instance, docker: instance.stop(docker))
+	def stop(self, ctx):
+		self.apply(ctx, lambda group, ctx: group.stop(ctx))
 	
-	def kill(self, docker):
-		self.apply(docker, lambda instance, docker: instance.kill(docker))
+	def kill(self, ctx):
+		self.apply(ctx, lambda group, ctx: group.kill(ctx))
 	
 	def save(self):
 		json.dump(self.cfg, open(self.path, "w"), sort_keys=True, indent=4, separators=(',', ': '))
