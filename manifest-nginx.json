@@ -1,5 +1,5 @@
 {
-    "simple": [
+    "nginx": [
         {
             "image": "jlewallen/nginx",
             "ip": "+1",

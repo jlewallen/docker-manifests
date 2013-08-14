@@ -92,13 +92,14 @@ class Instance:
 			return False
 
 	def make_params(self):
- 		return { 'image':        self.cfg['image'],
-			 'command':      self.cfg.get('command'),
-			 'ports':        self.cfg.get('ports'),
-			 'environment':  self.cfg.get('env'),
-			 'detach':       True,
-			 'hostname':     self.name,
-		        }
+ 		params = { 'image':        self.cfg['image'],
+			   'ports':        self.cfg.get('ports'),
+			   'environment':  self.cfg.get('env'),
+			   'command':      self.cfg.get('command'),
+			   'detach':       True,
+			   'hostname':     self.name,
+		          }
+		return params
 
 	def provision(self, ctx):
 		docker = ctx.docker
@@ -111,7 +112,8 @@ class Instance:
 				docker.start(self.short_id)
 		else:
 			print "%s: creating instance" % (self.name)
-			container = docker.create_container(**self.make_params())
+			params = self.make_params()
+			container = docker.create_container(**params)
 			self.short_id = container['Id']
 			docker.start(self.short_id)
 			self.cfg['container'] = self.short_id
