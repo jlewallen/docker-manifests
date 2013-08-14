@@ -19,10 +19,8 @@ def status():
 	state = State.load("dock.state")
 	ctx = Context(docker, None, state)
 	manifest = Manifest("manifest-test.json")
-	groups = []
-	return jsonify(status = {
-		'groups' : []
-	})
+	manifest.update(ctx)
+	return jsonify(manifest = manifest.to_json())
 
 @app.route('/favicon.ico')
 def favicon():

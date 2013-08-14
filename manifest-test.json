@@ -2,7 +2,7 @@
     "simple": [
         {
             "command": "/bin/nc -l -p 4444",
-            "container": "a1ffd4dda481",
+            "container": "20e5cf1871de",
             "image": "base",
             "ip": "+1",
             "ports": [
@@ -11,7 +11,7 @@
         },
         {
             "command": "/bin/nc -l -p 4444",
-            "container": "e21430d41e5d",
+            "container": "6bcfed91b24c",
             "image": "base",
             "ip": "+2",
             "ports": [

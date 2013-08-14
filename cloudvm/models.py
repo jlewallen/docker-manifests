@@ -70,6 +70,8 @@ class Instance:
 		self.short_id = self.cfg.get('container')
 		self.long_id = None
 		self.ip = None
+		self.running = False
+		self.created = False
 
 	def exists(self, docker):
 		if self.short_id is None:
@@ -117,9 +119,9 @@ class Instance:
 			print "%s: creating instance" % (self.name)
 			container = docker.create_container(**self.make_params())
 			self.short_id = container['Id']
-			docker.start(short_id)
-			self.cfg['container'] = short_id
-			print "%s: instance started %s" % (self.name, short_id)
+			docker.start(self.short_id)
+			self.cfg['container'] = self.short_id
+			print "%s: instance started %s" % (self.name, self.short_id)
 
 		# this is all kinds of race condition prone, too bad we
 		# can't do this before we start the container
@@ -184,42 +186,80 @@ class Instance:
 			docker.kill(self.short_id)
 			return self.short_id
 
+	def update(self, ctx):
+		self.created = self.exists(ctx.docker)
+		if self.created:
+			self.long_id = self.get_long_id(ctx.docker)
+			self.running = self.is_running(ctx.docker)
+		else:
+			self.cfg["container"] = None
+			self.long_id = None
+			self.short_id = None
+			self.running = False
+
+	def to_json(self):
+		return {
+			"name" : self.name,
+			"short_id" : self.short_id,
+			"long_id" : self.long_id,
+			"ip" : self.ip,
+			"running" : self.running,
+			"created" : self.created
+		}
+
 class Group:
 	def __init__(self, name, cfg):
 		self.name = name
 		self.cfg = cfg
+		self.instances = self.make_instances()
 
-	def apply(self, ctx, callback):
+	def make_instances(self):
+		instances = []
 		for index, instance in enumerate(self.cfg):
-			instance_name = "%s-%d" % (self.name, index)
-			callback(Instance(instance_name, instance), ctx)
-	
+			instances.append(Instance("%s-%d" % (self.name, index), instance))
+		return instances
+		
 	def provision(self, ctx):
-		self.apply(ctx, lambda instance, ctx: instance.provision(ctx))
+		map(lambda i: i.provision(ctx), self.instances)
 
 	def stop(self, ctx):
-		self.apply(ctx, lambda instance, ctx: instance.stop(ctx))
+		map(lambda i: i.stop(ctx), self.instances)
 	
 	def kill(self, ctx):
-		self.apply(ctx, lambda instance, ctx: instance.kill(ctx))
+		map(lambda i: i.kill(ctx), self.instances)
+	
+	def update(self, ctx):
+		map(lambda i: i.update(ctx), self.instances)
+
+	def to_json(self):
+		return {
+			"name" : self.name,
+			"instances" : map(lambda i: i.to_json(), self.instances) 
+		}
 
 class Manifest:
 	def __init__(self, path):
 		self.path = path
 		self.cfg = json.load(open(self.path))
+		self.groups = self.make_groups()
 
-	def apply(self, ctx, callback):
-		for name in self.cfg:
-			callback(Group(name, self.cfg[name]), ctx)
-	
+	def make_groups(self):
+		return map(lambda name: Group(name, self.cfg[name]), self.cfg)
+
+	def to_json(self):
+		return { 'groups' : map(lambda g: g.to_json(), self.groups) }
+
 	def provision(self, ctx):
-		self.apply(ctx, lambda group, ctx: group.provision(ctx))
+		map(lambda group: group.provision(ctx), self.groups)
 
 	def stop(self, ctx):
-		self.apply(ctx, lambda group, ctx: group.stop(ctx))
+		map(lambda group: group.stop(ctx), self.groups)
 	
 	def kill(self, ctx):
-		self.apply(ctx, lambda group, ctx: group.kill(ctx))
+		map(lambda group: group.kill(ctx), self.groups)
+	
+	def update(self, ctx):
+		map(lambda group: group.update(ctx), self.groups)
 	
 	def save(self):
 		json.dump(self.cfg, open(self.path, "w"), sort_keys=True, indent=4, separators=(',', ': '))
