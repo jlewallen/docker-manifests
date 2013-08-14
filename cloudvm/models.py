@@ -100,12 +100,6 @@ class Instance:
 			 'hostname':     self.name,
 		        }
 
-	def get_long_id(self, docker):
-		if self.long_id: return self.long_id
-		details = docker.inspect_container(self.short_id)
-		self.long_id = details['ID']
-		return self.long_id
-	
 	def provision(self, ctx):
 		docker = ctx.docker
 		if self.exists(docker):
@@ -126,9 +120,9 @@ class Instance:
 		# this is all kinds of race condition prone, too bad we
 		# can't do this before we start the container
 		print "%s: configuring networking %s" % (self.name, self.short_id)
-		long_id = self.get_long_id(docker)
-		self.configure_networking(self.short_id, long_id, "br0", self.calculate_ip())
-		ctx.state.update(long_id, self)
+		self.update(ctx)
+		self.configure_networking(self.short_id, self.long_id, "br0", self.calculate_ip())
+		ctx.state.update(self.long_id, self)
 		return self.short_id
 
 	def calculate_ip(self):
@@ -189,8 +183,12 @@ class Instance:
 	def update(self, ctx):
 		self.created = self.exists(ctx.docker)
 		if self.created:
-			self.long_id = self.get_long_id(ctx.docker)
+			details = ctx.docker.inspect_container(self.short_id)
+			self.long_id = details['ID']
 			self.running = self.is_running(ctx.docker)
+			self.started_at = details['State']['StartedAt']
+			self.created_at = details['Created']
+			self.pid = details['State']['Pid']
 		else:
 			self.cfg["container"] = None
 			self.long_id = None
@@ -204,7 +202,10 @@ class Instance:
 			"long_id" : self.long_id,
 			"ip" : self.ip,
 			"running" : self.running,
-			"created" : self.created
+			"created" : self.created,
+			"created_at" : self.created_at,
+			"started_at" : self.started_at,
+			"pid" : self.pid
 		}
 
 class Group:
@@ -234,6 +235,9 @@ class Group:
 	def to_json(self):
 		return {
 			"name" : self.name,
+			"resize_url" : "",
+			"stop_url" : "",
+			"start_url" : "",
 			"instances" : map(lambda i: i.to_json(), self.instances) 
 		}
 
@@ -250,12 +254,15 @@ class Manifest:
 		return { 'groups' : map(lambda g: g.to_json(), self.groups) }
 
 	def provision(self, ctx):
+		self.update(ctx)
 		map(lambda group: group.provision(ctx), self.groups)
 
 	def stop(self, ctx):
+		self.update(ctx)
 		map(lambda group: group.stop(ctx), self.groups)
 	
 	def kill(self, ctx):
+		self.update(ctx)
 		map(lambda group: group.kill(ctx), self.groups)
 	
 	def update(self, ctx):
@@ -263,4 +270,10 @@ class Manifest:
 	
 	def save(self):
 		json.dump(self.cfg, open(self.path, "w"), sort_keys=True, indent=4, separators=(',', ': '))
+
+	def find_instance(self, name):
+		for group in self.groups:
+			for instance in group.instances:
+				if instance.name == name: return instance
+		return None
 
