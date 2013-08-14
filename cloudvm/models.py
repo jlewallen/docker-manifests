@@ -127,7 +127,8 @@ class Instance:
 		print "%s: configuring networking %s" % (self.name, self.short_id)
 		self.update(ctx)
 		if self.needs_ip():
-			if self.has_host_mapping(): print "WARNING: please check your ports, ports mapped to the host won't work when assigning ips"
+			if self.has_host_mapping():
+				raise Exception("Host port mappings and IP configurations are mutually exclusive.")
 			self.configure_networking(self.short_id, self.long_id, "br0", self.calculate_ip())
 		ctx.state.update(self.long_id, self)
 		return self.short_id
