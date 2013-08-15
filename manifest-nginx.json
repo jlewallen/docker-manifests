@@ -1,7 +1,7 @@
 {
     "nginx": [
         {
-            "container": "518266d5fa85",
+            "container": "9e88a25e8e29",
             "image": "jlewallen/nginx",
             "ports": [
                 "80:80"

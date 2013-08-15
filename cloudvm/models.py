@@ -10,6 +10,7 @@ import netifaces
 import re
 import pickle
 import docker.client
+import logging
 
 from urlparse import urlparse
 
@@ -21,6 +22,30 @@ class Context:
 		self.docker = docker
 		self.cfg = cfg
 		self.state = state
+		formatting = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+		logging.basicConfig(format = formatting, stream = sys.stdout, level = logging.INFO)
+		self.log = logging.getLogger('dock')
+
+	def info(self, m):
+		self.log.info(m)
+
+class HostMachine:
+	def kill_all(self, ctx):
+		for container in ctx.docker.containers():
+			ctx.info("killing " + container['Id'])
+			ctx.docker.kill(container['Id'])
+
+	def delete_exited(self, ctx):
+		for container in ctx.docker.containers(all = True):
+			details = ctx.docker.inspect_container(container['Id'])
+			if not details['State']['Running']:
+				ctx.info("removing " + container['Id'])
+				ctx.docker.remove_container(container['Id'])
+
+	def delete_images(self, ctx):
+		for image in ctx.docker.images():
+			ctx.info("removing " + image['Id'])
+			ctx.docker.remove_image(image['Id'])
 
 class State:
 	def __init__(self):
@@ -108,23 +133,23 @@ class Instance:
 		docker = ctx.docker
 		if self.exists(docker):
 			if self.is_running(docker):
-				print "%s: skipping, %s is running" % (self.name, self.short_id)
+				ctx.info("%s: skipping, %s is running" % (self.name, self.short_id))
 				return self.short_id
 			else:
-				print "%s: %s exists, starting" % (self.name, self.short_id)
+				ctx.info("%s: %s exists, starting" % (self.name, self.short_id))
 				docker.start(self.short_id)
 		else:
-			print "%s: creating instance" % (self.name)
+			ctx.info("%s: creating instance" % (self.name))
 			params = self.make_params()
 			container = docker.create_container(**params)
 			self.short_id = container['Id']
 			docker.start(self.short_id)
 			self.cfg['container'] = self.short_id
-			print "%s: instance started %s" % (self.name, self.short_id)
+			ctx.info("%s: instance started %s" % (self.name, self.short_id))
 
 		# this is all kinds of race condition prone, too bad we
 		# can't do this before we start the container
-		print "%s: configuring networking %s" % (self.name, self.short_id)
+		ctx.info("%s: configuring networking %s" % (self.name, self.short_id))
 		self.update(ctx)
 		if self.needs_ip():
 			if self.has_host_mapping():
@@ -159,10 +184,10 @@ class Instance:
 				npsid = open("/sys/fs/cgroup/devices/lxc/" + long_id + "/tasks", "r").readline().strip()
 				break
 			except IOError:
-				print "%s: waiting for container %s cgroup" % (self.name, short_id)
+				ctx.info("%s: waiting for container %s cgroup" % (self.name, short_id))
 				time.sleep(0.1)
 
-		print "%s: configuring %s networking, assigning %s" % (self.name, short_id, ip)
+		ctx.info("%s: configuring %s networking, assigning %s" % (self.name, short_id, ip))
 
 		# strategy from unionize.sh
         	commands = [
@@ -184,14 +209,14 @@ class Instance:
 	def stop(self, ctx):
 		docker = ctx.docker
 		if self.is_running(docker):
-			print "%s: stopping %s" % (self.name, self.short_id)
+			ctx.info("%s: stopping %s" % (self.name, self.short_id))
 			docker.stop(self.short_id)
 			return self.short_id
 
 	def kill(self, ctx):
 		docker = ctx.docker
 		if self.is_running(docker):
-			print "%s: killing %s" % (self.name, self.short_id)
+			ctx.info("%s: killing %s" % (self.name, self.short_id))
 			docker.kill(self.short_id)
 			return self.short_id
 

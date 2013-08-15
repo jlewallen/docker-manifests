@@ -32,21 +32,13 @@ def main():
 	ctx = Context(docker, None, state)
 
 	if options.kill_all:
-		for container in docker.containers():
-			print "killing " + container['Id']
-			docker.kill(container['Id'])
+		HostMachine().kill_all(ctx)
 
 	if options.delete_exited:
-		for container in docker.containers(all = True):
-			details = docker.inspect_container(container['Id'])
-			if not details['State']['Running']:
-				print "removing " + container['Id']
-				docker.remove_container(container['Id'])
+		HostMachine().delete_exited(ctx)
 
 	if options.delete_images:
-		for image in docker.images():
-			print "removing " + image['Id']
-			docker.remove_image(image['Id'])
+		HostMachine().delete_images(ctx)
 
 	for path in options.manifests:
 		manifest = Manifest(path)
