@@ -1,0 +1,9 @@
+.group {
+	clear: both;
+}
+
+.instance {
+	width: 450px;
+	float: left;
+	margin-right: 10px;
+}

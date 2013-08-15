@@ -1,9 +1,29 @@
 {
     "simple": [
         {
-            "container": "de08cbd0a666",
+            "container": "29b0a753e7b1",
             "image": "jlewallen/nginx",
             "ip": "+1",
+            "ports": []
+        },
+        {
+            "container": "21b64c2246a8",
+            "image": "jlewallen/nginx",
+            "ip": "+2",
+            "ports": []
+        }
+    ],
+    "stuff": [
+        {
+            "container": "d81998da3b0c",
+            "image": "jlewallen/nginx",
+            "ip": "+1",
+            "ports": []
+        },
+        {
+            "container": "87377dbefaa4",
+            "image": "jlewallen/nginx",
+            "ip": "+2",
             "ports": []
         }
     ]

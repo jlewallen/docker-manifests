@@ -47,6 +47,14 @@ class HostMachine:
 			ctx.info("removing " + image['Id'])
 			ctx.docker.remove_image(image['Id'])
 
+	def to_json(self):
+		return {
+			"update_url" : "/host-machine/update",
+			"kill_all_url" : "/host-machine/kill-all",
+			"delete_exited" : "/host-machine/delete-exited",
+			"delete_images" : "/host-machine/delete-images"
+		}
+
 class State:
 	def __init__(self):
 		self.containers = {}
@@ -225,6 +233,13 @@ class Instance:
 			docker.kill(self.short_id)
 			return self.short_id
 
+	def destroy(self, ctx):
+		docker = ctx.docker
+		if self.created:
+			ctx.info("%s: destroying %s" % (self.name, self.short_id))
+			docker.remove_container(self.short_id)
+			return self.short_id
+
 	def update(self, ctx):
 		self.created = self.exists(ctx.docker)
 		if self.created:
@@ -256,7 +271,11 @@ class Instance:
 			"created" : self.created,
 			"created_at" : self.created_at,
 			"started_at" : self.started_at,
-			"pid" : self.pid
+			"pid" : self.pid,
+			"start_url" : "/instances/%s/start" % self.name,
+			"stop_url" : "/instances/%s/stop" % self.name,
+			"destroy_url" : "/instances/%s/destroy" % self.name,
+			"kill_url" : "/instances/%s/kill" % self.name
 		}
 
 class Group:
@@ -280,15 +299,43 @@ class Group:
 	def kill(self, ctx):
 		map(lambda i: i.kill(ctx), self.instances)
 	
+	def destroy(self, ctx):
+		map(lambda i: i.destroy(ctx), self.instances)
+	
 	def update(self, ctx):
 		map(lambda i: i.update(ctx), self.instances)
+
+	def are_all_created(self):
+		for instance in self.instances:
+			if not instance.created: return False
+		return True
+
+	def are_any_created(self):
+		for instance in self.instances:
+			if instance.created: return True
+		return False
+
+	def are_all_running(self):
+		for instance in self.instances:
+			if not instance.running: return False
+		return True
+
+	def are_any_running(self):
+		for instance in self.instances:
+			if instance.running: return True
+		return False
 
 	def to_json(self):
 		return {
 			"name" : self.name,
-			"resize_url" : "",
-			"stop_url" : "",
-			"start_url" : "",
+			"resize_url" : "/groups/%s/resize" % self.name,
+			"stop_url" : "/groups/%s/stop" % self.name,
+			"kill_url" : "/groups/%s/kill" % self.name,
+			"start_url" : "/groups/%s/start" % self.name,
+      "all_running" : self.are_all_running(),
+      "any_running" : self.are_any_running(),
+      "all_created" : self.are_all_created(),
+      "any_created" : self.are_any_created(),
 			"instances" : map(lambda i: i.to_json(), self.instances) 
 		}
 
@@ -302,7 +349,13 @@ class Manifest:
 		return map(lambda name: Group(name, self.cfg[name]), self.cfg)
 
 	def to_json(self):
-		return { 'groups' : map(lambda g: g.to_json(), self.groups) }
+		return {
+			'path' : self.path,
+			'groups' : map(lambda g: g.to_json(), self.groups),
+			"start_url" : "/manifests/0/start",
+			"kill_url" : "/manifests/0/kill",
+			"destroy_url" : "/manifests/0/destroy"
+		}
 
 	def provision(self, ctx):
 		self.update(ctx)
@@ -311,10 +364,17 @@ class Manifest:
 	def stop(self, ctx):
 		self.update(ctx)
 		map(lambda group: group.stop(ctx), self.groups)
+		self.update(ctx)
 	
 	def kill(self, ctx):
 		self.update(ctx)
 		map(lambda group: group.kill(ctx), self.groups)
+		self.update(ctx)
+	
+	def destroy(self, ctx):
+		self.update(ctx)
+		map(lambda group: group.destroy(ctx), self.groups)
+		self.update(ctx)
 	
 	def update(self, ctx):
 		map(lambda group: group.update(ctx), self.groups)
