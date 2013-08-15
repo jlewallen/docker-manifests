@@ -5,12 +5,19 @@
 <div class="manifest" ng-show="model">
   <h2>{{model.manifest.path}}</h2>
 
-  <button class="btn btn-success" ng-click="startManifest()">Start</button>
+  <button class="btn btn-info" ng-click="startManifest()">Start</button>
   <button class="btn btn-warning" ng-click="killManifest()" ng-show="model.manifest.can_kill">Kill</button>
   <button class="btn btn-danger" ng-click="destroyManifest()" ng-show="model.manifest.can_destroy">Destroy</button>
 
   <div ng-repeat="group in model.manifest.groups" class="group">
-    <h4>{{group.name}}</h4>
+
+		<h4>{{group.name}}</h4>
+
+		<div class="actions">
+			<button class="btn btn-info btn-small" ng-click="startGroup(group)">Start</button>
+			<button class="btn btn-warning btn-small" ng-click="killGroup(group)" ng-show="group.can_kill">Kill</button>
+			<button class="btn btn-danger btn-small" ng-click="destroyGroup(group)" ng-show="group.can_destroy">Destroy</button>
+		</div>
 
     <div ng-repeat="instance in group.instances" class="instance panel" ng-class="{ 'panel-success': instance.running, created: instance.created }">
       <div class="panel-heading">

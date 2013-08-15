@@ -1,13 +1,13 @@
 {
     "simple": [
         {
-            "container": "29b0a753e7b1",
+            "container": null,
             "image": "jlewallen/nginx",
             "ip": "+1",
             "ports": []
         },
         {
-            "container": "21b64c2246a8",
+            "container": null,
             "image": "jlewallen/nginx",
             "ip": "+2",
             "ports": []
@@ -15,15 +15,15 @@
     ],
     "stuff": [
         {
-            "container": "d81998da3b0c",
+            "container": null,
             "image": "jlewallen/nginx",
-            "ip": "+1",
+            "ip": "+3",
             "ports": []
         },
         {
-            "container": "87377dbefaa4",
+            "container": null,
             "image": "jlewallen/nginx",
-            "ip": "+2",
+            "ip": "+4",
             "ports": []
         }
     ]

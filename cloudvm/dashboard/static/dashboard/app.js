@@ -49,4 +49,22 @@ function IndexController($scope, $http) {
 			store(data);
     });
   }
+
+  $scope.startGroup = function(group) {
+    post(group.start_url).success(function(data) {
+			store(data);
+    });
+  }
+
+  $scope.killGroup = function(group) {
+    post(group.kill_url).success(function(data) {
+			store(data);
+    });
+  }
+
+  $scope.destroyGroup = function(group) {
+    post(group.destroy_url).success(function(data) {
+			store(data);
+    });
+  }
 }

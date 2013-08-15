@@ -329,14 +329,17 @@ class Group:
 		return {
 			"name" : self.name,
 			"resize_url" : "/groups/%s/resize" % self.name,
+			"start_url" : "/groups/%s/start" % self.name,
 			"stop_url" : "/groups/%s/stop" % self.name,
 			"kill_url" : "/groups/%s/kill" % self.name,
-			"start_url" : "/groups/%s/start" % self.name,
+			"destroy_url" : "/groups/%s/destroy" % self.name,
       "all_running" : self.are_all_running(),
       "any_running" : self.are_any_running(),
       "all_created" : self.are_all_created(),
       "any_created" : self.are_any_created(),
-			"instances" : map(lambda i: i.to_json(), self.instances) 
+			"can_kill" : self.are_any_running(),
+			"can_destroy" : self.are_any_created() and not self.are_any_running(),
+			"instances" : map(lambda i: i.to_json(), self.instances)
 		}
 
 class Manifest:
@@ -375,7 +378,28 @@ class Manifest:
 		self.update(ctx)
 		map(lambda group: group.destroy(ctx), self.groups)
 		self.update(ctx)
+
+	def group(self, name):
+		for group in self.groups:
+			if group.name == name: return group
+		return None
 	
+	def provisionGroup(self, ctx, name):
+		self.group(name).provision(ctx)
+		self.update(ctx)
+
+	def killGroup(self, ctx, name):
+		self.group(name).kill(ctx)
+		self.update(ctx)
+
+	def destroyGroup(self, ctx, name):
+		self.group(name).destroy(ctx)
+		self.update(ctx)
+
+	def resizeGroup(self, ctx, name, size):
+		self.group(name).resize(ctx)
+		self.update(ctx)
+
 	def update(self, ctx):
 		map(lambda group: group.update(ctx), self.groups)
 	
