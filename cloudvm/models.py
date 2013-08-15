@@ -60,6 +60,9 @@ class State:
 	def update(self, long_id, instance):
 		self.containers[long_id] = instance
 
+	def get(self, long_id):
+		return self.containers.get(long_id)
+
 	def save(self, path):
 		pickle.dump(self, open(path, "wb"))
 
@@ -206,6 +209,8 @@ class Instance:
 			if os.system(command) != 0:
 				raise Exception("Error configuring networking: '%s' failed!" % command)
 
+		self.ip = ip
+
 	def stop(self, ctx):
 		docker = ctx.docker
 		if self.is_running(docker):
@@ -229,6 +234,8 @@ class Instance:
 			self.started_at = details['State']['StartedAt']
 			self.created_at = details['Created']
 			self.pid = details['State']['Pid']
+			if ctx.state.get(self.long_id):
+				self.ip = ctx.state.get(self.long_id).ip
 		else:
 			self.cfg["container"] = None
 			self.long_id = None
@@ -237,6 +244,7 @@ class Instance:
 			self.started_at = None
 			self.created_at = None
 			self.pid = None
+			self.ip = None
 
 	def to_json(self):
 		return {
