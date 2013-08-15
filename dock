@@ -2,21 +2,22 @@
 
 import os
 import optparse
+import re
 
 from cloudvm.models import *
 
 class Options:
 	def __init__(self, entries, args): 
 		self.__dict__.update(entries)	
-		self.manifest = args[0]
+		self.manifests = args
 
 def get_options():
 	parser = optparse.OptionParser()
+	parser.add_option("--delete-exited", action="store_true", dest="delete_exited", default=False, help="delete exited")
+	parser.add_option("--kill-all", action="store_true", dest="kill_all", default=False, help="kill all")
 	parser.add_option("--stop", action="store_true", dest="stop", default=False, help="stop instances")
 	parser.add_option("--kill", action="store_true", dest="kill", default=False, help="kill instances")
 	raw_options, args = parser.parse_args()
-	if not args:
-		exit("No manifest given.")
 	return Options(vars(raw_options), args)
 
 def main():
@@ -28,16 +29,29 @@ def main():
 
 	state = State.load("dock.state")
 	ctx = Context(docker, None, state)
-	manifest = Manifest(options.manifest)
 
-	if options.stop:
-		manifest.stop(ctx)
-	elif options.kill:
-		manifest.kill(ctx)
-	else:
-		manifest.provision(ctx)
+	if options.kill_all:
+		for container in docker.containers():
+			print "killing " + container['Id']
+			docker.kill(container['Id'])
 
-	manifest.save()
+	if options.delete_exited:
+		for container in docker.containers(all = True):
+			details = docker.inspect_container(container['Id'])
+			if not details['State']['Running']:
+				print "removing " + container['Id']
+				docker.remove_container(container['Id'])
+
+	for path in options.manifests:
+		manifest = Manifest(path)
+		if options.stop:
+			manifest.stop(ctx)
+		elif options.kill:
+			manifest.kill(ctx)
+		else:
+			manifest.provision(ctx)
+		manifest.save()
+
 	state.save("dock.state")
 
 main()

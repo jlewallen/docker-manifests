@@ -1,3 +1,0 @@
-#!/bin/bash
-
-docker rm $(docker ps -a|grep Exit| cut -f 1 -d " ")
