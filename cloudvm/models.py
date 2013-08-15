@@ -154,7 +154,7 @@ class Instance:
 		if self.needs_ip():
 			if self.has_host_mapping():
 				raise Exception("Host port mappings and IP configurations are mutually exclusive.")
-			self.configure_networking(self.short_id, self.long_id, "br0", self.calculate_ip())
+			self.configure_networking(ctx, self.short_id, self.long_id, "br0", self.calculate_ip())
 		ctx.state.update(self.long_id, self)
 		return self.short_id
 
@@ -172,7 +172,7 @@ class Instance:
 			return Configuration.get_offset_ip(int(m.group(0)))
 		return configured
 
-	def configure_networking(self, short_id, long_id, bridge, ip):
+	def configure_networking(self, ctx, short_id, long_id, bridge, ip):
 		iface_suffix = new_id()
 		iface_local_name = "pvnetl%s" % iface_suffix
 		iface_remote_name = "pvnetr%s" % iface_suffix
@@ -234,6 +234,9 @@ class Instance:
 			self.long_id = None
 			self.short_id = None
 			self.running = False
+			self.started_at = None
+			self.created_at = None
+			self.pid = None
 
 	def to_json(self):
 		return {

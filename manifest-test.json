@@ -1,11 +1,10 @@
 {
     "simple": [
         {
+            "container": "22c50cab73ee",
             "image": "jlewallen/nginx",
             "ip": "+1",
-            "ports": [
-                "80:80"
-            ]
+            "ports": []
         }
     ]
 }
