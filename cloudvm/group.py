@@ -47,14 +47,21 @@ class Group:
 	def resize(self, ctx, newSize):
 		if newSize == 0: raise Exception("Can't remove all instances, just stop the group.")
 		currentSize = len(self.instances)
+		removed = []
+		added = []
 		ctx.info("resizing group %s oldSize=%d newSize=%d" % (self.name, currentSize, newSize))
 		while currentSize != newSize:
 			if currentSize < newSize:
 				ctx.info("adding to group %s" % self.name)
-				self.instances.append(self.instances[0])
+				new_name = "%s-%d" % (self.name, len(self.instances))
+				instance = self.instances[0].clone(new_name)
+				added.append(instance)
+				self.instances.append(instance)
 			else:
 				ctx.info("removing from group %s" % self.name)
-				self.instances.remove(self.instances[currentSize - 1])
+				instance = self.instances[currentSize - 1]
+				removed.append(instance)
+				self.instances.remove(instance)
 			currentSize = len(self.instances)
 		print self.instances
 

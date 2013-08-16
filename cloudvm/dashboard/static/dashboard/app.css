@@ -11,3 +11,15 @@
 .actions {
 	margin-bottom: 10px;
 }
+
+html {
+	overflow-y: scroll;
+}
+
+.busy {
+	background-image: url("../images/busy.gif");
+	margin-top: 15px;
+	margin-left: 170px;
+	width: 31px;
+  height: 31px;
+}

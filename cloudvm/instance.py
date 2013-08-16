@@ -7,6 +7,7 @@ import time
 import string
 import os
 import re
+import copy
 
 from context import *
 
@@ -193,3 +194,11 @@ class Instance:
 			"destroy_url" : "/instances/%s/destroy" % self.name,
 			"kill_url" : "/instances/%s/kill" % self.name
 		}
+
+	def clone(self, new_name):
+		clone = Instance(new_name)
+		clone.image = self.image
+		clone.ports = self.ports
+		clone.env = self.env
+		clone.command = self.command
+		return clone
