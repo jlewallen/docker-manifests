@@ -6,11 +6,13 @@ from cloudvm.models import *
 
 class WebService:
 	def __init__(self):
+		self.path = "manifest-test.json"
 		self.docker = Configuration.get_docker()
-		self.ctx = Context(self.docker, None, State.load("dock.state"))
-		self.manifest = Manifest.load("manifest-test.json")
-		self.manifest.update(self.ctx)
+		self.state = State.load(self.path + ".state")
+		self.manifest = Manifest.load(self.path, self.state)
+		self.ctx = Context(self.docker, None, self.state)
 		self.machine = HostMachine()
+		self.manifest.update(self.ctx)
 
 	def startManifest(self):
 		self.manifest.provision(self.ctx)
@@ -48,7 +50,7 @@ class WebService:
 		return self.to_status_json()
 
 	def save(self):
-		self.ctx.state.save("dock.state")
+		self.ctx.save()
 
 	def to_status_json(self):
 		return {

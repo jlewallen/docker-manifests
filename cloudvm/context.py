@@ -25,15 +25,19 @@ class Context:
 	def info(self, m):
 		self.log.info(m)
 
+	def save(self):
+		if self.state: self.state.save()
+
 class State:
-	def __init__(self):
+	def __init__(self, path):
+		self.path = path
 		self.containers = {}
 
 	@staticmethod
 	def load(path):
 		if os.path.isfile(path):
 			return pickle.load(open(path))
-		return State()
+		return State(path)
 
 	def update(self, long_id, instance):
 		self.containers[long_id] = instance
@@ -41,8 +45,8 @@ class State:
 	def get(self, long_id):
 		return self.containers.get(long_id)
 
-	def save(self, path):
-		pickle.dump(self, open(path, "wb"))
+	def save(self):
+		pickle.dump(self, open(self.path, "wb"))
 
 class Configuration:
 	def __init__(self):

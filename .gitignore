@@ -1,4 +1,4 @@
 *.swp
 .vagrant
 *.pyc
-dock.state
+*.state

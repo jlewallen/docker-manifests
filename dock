@@ -31,8 +31,7 @@ def main():
 	if os.geteuid() != 0:
 		exit("You need to have root privileges to run this script.\nPlease try again, this time using 'sudo'. Exiting.")
 
-	state = State.load("dock.state")
-	ctx = Context(docker, None, state)
+	ctx = Context(docker, None, None)
 
 	if options.kill_all:
 		HostMachine().kill_all(ctx)
@@ -44,7 +43,8 @@ def main():
 		HostMachine().delete_images(ctx)
 
 	for path in options.manifests:
-		manifest = Manifest.load(path)
+		ctx.state = State.load(path + ".state")
+		manifest = Manifest.load(path, ctx.state)
 		if options.stop:
 			manifest.stop(ctx)
 		elif options.kill:
@@ -52,6 +52,6 @@ def main():
 		else:
 			manifest.provision(ctx)
 
-	state.save("dock.state")
+	ctx.save()
 
 main()

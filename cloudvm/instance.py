@@ -19,7 +19,8 @@ class Instance:
 		self.command = None
 		self.short_id = None
 		self.long_id = None
-		self.ip = None
+		self.assigned_ip = None
+		self.configured_ip = None
 		self.running = False
 		self.created = False
 
@@ -57,7 +58,7 @@ class Instance:
 		return params
 
 	def needs_ip(self):
-		return self.ip is not None
+		return self.configured_ip is not None
 
 	def provision(self, ctx):
 		docker = ctx.docker
@@ -84,7 +85,7 @@ class Instance:
 			if self.has_host_mapping():
 				raise Exception("Host port mappings and IP configurations are mutually exclusive.")
 			self.configure_networking(ctx, self.short_id, self.long_id, "br0", self.calculate_ip())
-		ctx.state.update(self.long_id, self)
+		ctx.state.update(self.name, self)
 		return self.short_id
 
 	def has_host_mapping(self):
@@ -95,7 +96,7 @@ class Instance:
 		return False
 
 	def calculate_ip(self):
-		configured = self.ip
+		configured = self.configured_ip
 		m = re.match(r"^\+(\d+)", configured)
 		if m:
 			return Configuration.get_offset_ip(int(m.group(0)))
@@ -135,7 +136,7 @@ class Instance:
 			if os.system(command) != 0:
 				raise Exception("Error configuring networking: '%s' failed!" % command)
 
-		self.ip = ip
+		self.assigned_ip = ip
 
 	def stop(self, ctx):
 		docker = ctx.docker
@@ -167,8 +168,6 @@ class Instance:
 			self.started_at = details['State']['StartedAt']
 			self.created_at = details['Created']
 			self.pid = details['State']['Pid']
-			if ctx.state.get(self.long_id):
-				self.ip = ctx.state.get(self.long_id).ip
 		else:
 			self.long_id = None
 			self.short_id = None
@@ -176,14 +175,14 @@ class Instance:
 			self.started_at = None
 			self.created_at = None
 			self.pid = None
-			self.ip = None
+			self.assigned_ip = None
 
 	def to_json(self):
 		return {
 			"name" : self.name,
 			"short_id" : self.short_id,
 			"long_id" : self.long_id,
-			"ip" : self.ip,
+			"ip" : self.assigned_ip,
 			"running" : self.running,
 			"created" : self.created,
 			"created_at" : self.created_at,

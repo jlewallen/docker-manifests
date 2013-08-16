@@ -12,19 +12,24 @@ class Manifest:
 		self.groups = []
 
 	@staticmethod
-	def load(path):
+	def load(path, state):
 		manifest_cfg = json.load(open(path))
 		manifest = Manifest(path)
 		for group_name in manifest_cfg:
 			group_cfg = manifest_cfg[group_name]
 			group = Group(group_name)
 			for index, instance_cfg in enumerate(group_cfg):
-				instance = Instance("%s-%d" % (group_name, index))
+				name = "%s-%d" % (group_name, index)
+				saved = state.get(name)
+				instance = Instance(name)
+				if saved:
+					instance.short_id = saved.short_id
+					instance.assigned_ip = saved.assigned_ip
+				instance.configured_ip = instance_cfg.get("ip")
 				instance.image = instance_cfg["image"]
 				instance.ports = instance_cfg.get("ports")
 				instance.env = instance_cfg.get("env")
 				instance.command = instance_cfg.get("command")
-				instance.ip = instance_cfg.get("ip")
 				group.instances.append(instance)
 			manifest.groups.append(group)
 		return manifest
