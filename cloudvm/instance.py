@@ -6,9 +6,6 @@ import re
 
 from context import *
 
-def new_id(size=6, chars=string.ascii_uppercase + string.digits):
-	return ''.join(random.choice(chars) for x in range(size))
-
 class Instance:
 	def __init__(self, name, cfg):
 		self.name = name
@@ -18,6 +15,10 @@ class Instance:
 		self.ip = None
 		self.running = False
 		self.created = False
+
+	@staticmethod
+	def new_id(size=6, chars=string.ascii_uppercase + string.digits):
+		return ''.join(random.choice(chars) for x in range(size))
 
 	def exists(self, docker):
 		if self.short_id is None:
@@ -94,7 +95,7 @@ class Instance:
 		return configured
 
 	def configure_networking(self, ctx, short_id, long_id, bridge, ip):
-		iface_suffix = new_id()
+		iface_suffix = Instance.new_id()
 		iface_local_name = "pvnetl%s" % iface_suffix
 		iface_remote_name = "pvnetr%s" % iface_suffix
 
