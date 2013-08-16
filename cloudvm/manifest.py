@@ -1,3 +1,7 @@
+#
+#
+#
+
 import json
 
 from group import *
@@ -7,6 +11,10 @@ class Manifest:
 		self.path = path
 		self.cfg = json.load(open(self.path))
 		self.groups = self.make_groups()
+
+	@staticmethod
+	def load(path):
+		return Manifest(path)
 
 	def make_groups(self):
 		return map(lambda name: Group(name, self.cfg[name]), self.cfg)

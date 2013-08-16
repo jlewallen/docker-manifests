@@ -1,3 +1,7 @@
+#
+#
+#
+
 class HostMachine:
 	def kill_all(self, ctx):
 		for container in ctx.docker.containers():

@@ -1,4 +1,7 @@
 #!/usr/bin/python
+#
+#
+#
 
 import os
 import optparse
@@ -41,7 +44,7 @@ def main():
 		HostMachine().delete_images(ctx)
 
 	for path in options.manifests:
-		manifest = Manifest(path)
+		manifest = Manifest.load(path)
 		if options.stop:
 			manifest.stop(ctx)
 		elif options.kill:
