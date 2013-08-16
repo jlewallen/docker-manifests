@@ -67,4 +67,10 @@ function IndexController($scope, $http) {
 			store(data);
     });
   }
+
+  $scope.resizeGroup = function(group, size) {
+    post(group.resize_url + "?size=" + size).success(function(data) {
+			store(data);
+    });
+  }
 }

@@ -47,6 +47,11 @@ class WebService:
 		self.save()
 		return self.to_status_json()
 
+	def resizeGroup(self, name, newSize):
+		self.manifest.resizeGroup(self.ctx, name, newSize)
+		self.save()
+		return self.to_status_json()
+
 	def save(self):
 		self.manifest.save()
 		self.ctx.state.save("dock.state")
@@ -95,6 +100,11 @@ def killGroup(name):
 def destroyGroup(name):
   web = WebService()
   return jsonify(web.destroyGroup(name))
+
+@app.route('/groups/<string:name>/resize', methods=['POST'])
+def resizeGroup(name):
+	web = WebService()
+	return jsonify(web.resizeGroup(name, int(request.args['size'])))
 
 @app.route('/favicon.ico')
 def favicon():

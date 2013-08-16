@@ -201,16 +201,16 @@ class Instance:
 		ctx.info("%s: configuring %s networking, assigning %s" % (self.name, short_id, ip))
 
 		# strategy from unionize.sh
-        	commands = [
+		commands = [
 			"mkdir -p /var/run/netns",
-        		"rm -f /var/run/netns/%s" % long_id,
-        		"ln -s /proc/%s/ns/net /var/run/netns/%s" % (npsid, long_id),
-        		"ip link add name %s type veth peer name %s" % (iface_local_name, iface_remote_name),
-        		"brctl addif %s %s" % (bridge, iface_local_name),
-        		"ifconfig %s up" % (iface_local_name),
-        		"ip link set %s netns %s" % (iface_remote_name, npsid),
-        		"ip netns exec %s ip link set %s name eth1" % (long_id, iface_remote_name),
-        		"ip netns exec %s ifconfig eth1 %s" % (long_id, ip)
+			"rm -f /var/run/netns/%s" % long_id,
+      "ln -s /proc/%s/ns/net /var/run/netns/%s" % (npsid, long_id),
+      "ip link add name %s type veth peer name %s" % (iface_local_name, iface_remote_name),
+      "brctl addif %s %s" % (bridge, iface_local_name),
+      "ifconfig %s up" % (iface_local_name),
+      "ip link set %s netns %s" % (iface_remote_name, npsid),
+      "ip netns exec %s ip link set %s name eth1" % (long_id, iface_remote_name),
+      "ip netns exec %s ifconfig eth1 %s" % (long_id, ip)
 		]
 
 		for command in commands:
@@ -325,6 +325,20 @@ class Group:
 			if instance.running: return True
 		return False
 
+	def resize(self, ctx, newSize):
+		if newSize == 0: raise Exception("Can't remove all instances, just stop the group.")
+		currentSize = len(self.instances)
+		ctx.info("resizing group %s oldSize=%d newSize=%d" % (self.name, currentSize, newSize))
+		while currentSize != newSize:
+			if currentSize < newSize:
+				ctx.info("adding to group %s" % self.name)
+				self.instances.append(self.instances[0])
+			else:
+				ctx.info("removing from group %s" % self.name)
+				self.instances.remove(self.instances[currentSize - 1])
+			currentSize = len(self.instances)
+		print self.instances
+
 	def to_json(self):
 		return {
 			"name" : self.name,
@@ -397,7 +411,7 @@ class Manifest:
 		self.update(ctx)
 
 	def resizeGroup(self, ctx, name, size):
-		self.group(name).resize(ctx)
+		self.group(name).resize(ctx, size)
 		self.update(ctx)
 
 	def update(self, ctx):

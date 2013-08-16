@@ -17,6 +17,9 @@
 			<button class="btn btn-info btn-small" ng-click="startGroup(group)">Start</button>
 			<button class="btn btn-warning btn-small" ng-click="killGroup(group)" ng-show="group.can_kill">Kill</button>
 			<button class="btn btn-danger btn-small" ng-click="destroyGroup(group)" ng-show="group.can_destroy">Destroy</button>
+			<button class="btn btn-small" ng-click="resizeGroup(group, 1)">R1</button>
+			<button class="btn btn-small" ng-click="resizeGroup(group, 2)">R2</button>
+			<button class="btn btn-small" ng-click="resizeGroup(group, 4)">R4</button>
 		</div>
 
     <div ng-repeat="instance in group.instances" class="instance panel" ng-class="{ 'panel-success': instance.running, created: instance.created }">
