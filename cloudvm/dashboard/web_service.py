@@ -48,7 +48,6 @@ class WebService:
 		return self.to_status_json()
 
 	def save(self):
-		self.manifest.save()
 		self.ctx.state.save("dock.state")
 
 	def to_status_json(self):

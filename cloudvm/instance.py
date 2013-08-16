@@ -11,10 +11,13 @@ import re
 from context import *
 
 class Instance:
-	def __init__(self, name, cfg):
+	def __init__(self, name):
 		self.name = name
-		self.cfg = cfg
-		self.short_id = self.cfg.get('container')
+		self.image = None
+		self.ports = None
+		self.env = None
+		self.command = None
+		self.short_id = None
 		self.long_id = None
 		self.ip = None
 		self.running = False
@@ -43,17 +46,18 @@ class Instance:
 			return False
 
 	def make_params(self):
- 		params = { 'image':        self.cfg['image'],
-			   'ports':        self.cfg.get('ports'),
-			   'environment':  self.cfg.get('env'),
-			   'command':      self.cfg.get('command'),
-			   'detach':       True,
-			   'hostname':     self.name,
-		          }
+		params = {
+			'image':        self.image,
+			'ports':        self.ports,
+			'environment':  self.env,
+			'command':      self.command,
+			'detach':       True,
+			'hostname':     self.name,
+		}
 		return params
 
 	def needs_ip(self):
-		return self.cfg.get('ip') is not None
+		return self.ip is not None
 
 	def provision(self, ctx):
 		docker = ctx.docker
@@ -70,7 +74,6 @@ class Instance:
 			container = docker.create_container(**params)
 			self.short_id = container['Id']
 			docker.start(self.short_id)
-			self.cfg['container'] = self.short_id
 			ctx.info("%s: instance started %s" % (self.name, self.short_id))
 
 		# this is all kinds of race condition prone, too bad we
@@ -85,14 +88,14 @@ class Instance:
 		return self.short_id
 
 	def has_host_mapping(self):
-		if self.cfg.get("ports") is None:
+		if self.ports is None:
 			return False
-		for port in self.cfg.get("ports"):
+		for port in self.ports:
 			if re.match(r"\d+:", port): return True
 		return False
 
 	def calculate_ip(self):
-		configured = self.cfg["ip"]
+		configured = self.ip
 		m = re.match(r"^\+(\d+)", configured)
 		if m:
 			return Configuration.get_offset_ip(int(m.group(0)))
@@ -167,7 +170,6 @@ class Instance:
 			if ctx.state.get(self.long_id):
 				self.ip = ctx.state.get(self.long_id).ip
 		else:
-			self.cfg["container"] = None
 			self.long_id = None
 			self.short_id = None
 			self.running = False

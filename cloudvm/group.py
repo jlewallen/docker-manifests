@@ -5,17 +5,10 @@
 from instance import *
 
 class Group:
-	def __init__(self, name, cfg):
+	def __init__(self, name):
 		self.name = name
-		self.cfg = cfg
-		self.instances = self.make_instances()
+		self.instances = []
 
-	def make_instances(self):
-		instances = []
-		for index, instance in enumerate(self.cfg):
-			instances.append(Instance("%s-%d" % (self.name, index), instance))
-		return instances
-		
 	def provision(self, ctx):
 		map(lambda i: i.provision(ctx), self.instances)
 

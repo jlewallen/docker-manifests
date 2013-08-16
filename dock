@@ -51,7 +51,6 @@ def main():
 			manifest.kill(ctx)
 		else:
 			manifest.provision(ctx)
-		manifest.save()
 
 	state.save("dock.state")
 

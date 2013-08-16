@@ -7,21 +7,31 @@ import json
 from group import *
 
 class Manifest:
-	def __init__(self, path):
-		self.path = path
-		self.cfg = json.load(open(self.path))
-		self.groups = self.make_groups()
+	def __init__(self, name):
+		self.name = name
+		self.groups = []
 
 	@staticmethod
 	def load(path):
-		return Manifest(path)
-
-	def make_groups(self):
-		return map(lambda name: Group(name, self.cfg[name]), self.cfg)
+		manifest_cfg = json.load(open(path))
+		manifest = Manifest(path)
+		for group_name in manifest_cfg:
+			group_cfg = manifest_cfg[group_name]
+			group = Group(group_name)
+			for index, instance_cfg in enumerate(group_cfg):
+				instance = Instance("%s-%d" % (group_name, index))
+				instance.image = instance_cfg["image"]
+				instance.ports = instance_cfg.get("ports")
+				instance.env = instance_cfg.get("env")
+				instance.command = instance_cfg.get("command")
+				instance.ip = instance_cfg.get("ip")
+				group.instances.append(instance)
+			manifest.groups.append(group)
+		return manifest
 
 	def to_json(self):
 		return {
-			'path' : self.path,
+			'name' : self.name,
 			'groups' : map(lambda g: g.to_json(), self.groups),
 			"start_url" : "/manifests/0/start",
 			"kill_url" : "/manifests/0/kill",
@@ -71,9 +81,6 @@ class Manifest:
 	def update(self, ctx):
 		map(lambda group: group.update(ctx), self.groups)
 	
-	def save(self):
-		json.dump(self.cfg, open(self.path, "w"), sort_keys=True, indent=4, separators=(',', ': '))
-
 	def find_instance(self, name):
 		for group in self.groups:
 			for instance in group.instances:
