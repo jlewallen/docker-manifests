@@ -21,12 +21,16 @@ class Context:
 		formatting = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 		logging.basicConfig(format = formatting, stream = sys.stdout, level = logging.INFO)
 		self.log = logging.getLogger('dock')
+		self.log.info("local ip: %s" % Configuration.get_local_ip())
 
 	def info(self, m):
 		self.log.info(m)
 
 	def save(self):
 		if self.state: self.state.save()
+
+	def allocate_ip(self):
+		return self.state.allocate_ip()
 
 class State:
 	def __init__(self, path):
@@ -41,6 +45,22 @@ class State:
 
 	def update(self, long_id, instance):
 		self.containers[long_id] = instance
+
+	def assigned_ips(self):
+		ips = []
+		for name in self.containers:
+			instance = self.containers[name]
+			if instance.assigned_ip:
+				ips.append(instance.assigned_ip)
+		return ips
+
+	def allocate_ip(self):
+		assigned = self.assigned_ips()
+		print assigned
+		for i in range(11, 255):
+			ip = Configuration.get_offset_ip(i)
+			if ip not in assigned: return ip
+		raise "No more IPs available"
 
 	def get(self, long_id):
 		return self.containers.get(long_id)

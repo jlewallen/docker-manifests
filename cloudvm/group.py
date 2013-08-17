@@ -63,7 +63,6 @@ class Group:
 				removed.append(instance)
 				self.instances.remove(instance)
 			currentSize = len(self.instances)
-		print self.instances
 
 	def new_instance(self, ctx):
 			name = "%s-%d" % (self.name, len(self.instances))

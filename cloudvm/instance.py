@@ -85,7 +85,7 @@ class Instance:
 		if self.needs_ip():
 			if self.has_host_mapping():
 				raise Exception("Host port mappings and IP configurations are mutually exclusive.")
-			self.configure_networking(ctx, self.short_id, self.long_id, "br0", self.calculate_ip())
+			self.configure_networking(ctx, self.short_id, self.long_id, "br0", self.allocate_ip(ctx))
 		ctx.state.update(self.name, self)
 		return self.short_id
 
@@ -96,11 +96,14 @@ class Instance:
 			if re.match(r"\d+:", port): return True
 		return False
 
+	def allocate_ip(self, ctx):
+		if self.assigned_ip: return self.assigned_ip
+		return ctx.allocate_ip()
+
 	def calculate_ip(self):
 		configured = self.configured_ip
 		m = re.match(r"^\+(\d+)", configured)
-		if m:
-			return Configuration.get_offset_ip(int(m.group(0)))
+		if m: return Configuration.get_offset_ip(int(m.group(0)))
 		return configured
 
 	def configure_networking(self, ctx, short_id, long_id, bridge, ip):
