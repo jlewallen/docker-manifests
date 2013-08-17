@@ -9,8 +9,8 @@ class WebService:
 		self.path = "manifest-test.json"
 		self.docker = Configuration.get_docker()
 		self.state = State.load(self.path + ".state")
-		self.manifest = Manifest.load(self.path, self.state)
 		self.ctx = Context(self.docker, None, self.state)
+		self.manifest = Manifest.load(self.path, self.ctx)
 		self.machine = HostMachine()
 		self.manifest.update(self.ctx)
 

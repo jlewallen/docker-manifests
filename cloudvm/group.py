@@ -5,8 +5,9 @@
 from instance import *
 
 class Group:
-	def __init__(self, name):
+	def __init__(self, name, template):
 		self.name = name
+		self.template = template
 		self.instances = []
 
 	def provision(self, ctx):
@@ -53,8 +54,7 @@ class Group:
 		while currentSize != newSize:
 			if currentSize < newSize:
 				ctx.info("adding to group %s" % self.name)
-				new_name = "%s-%d" % (self.name, len(self.instances))
-				instance = self.instances[0].clone(new_name)
+				instance = self.new_instance(ctx)
 				added.append(instance)
 				self.instances.append(instance)
 			else:
@@ -64,6 +64,20 @@ class Group:
 				self.instances.remove(instance)
 			currentSize = len(self.instances)
 		print self.instances
+
+	def new_instance(self, ctx):
+			name = "%s-%d" % (self.name, len(self.instances))
+			saved = ctx.state.get(name)
+			instance = Instance(name)
+			if saved:
+				instance.short_id = saved.short_id
+				instance.assigned_ip = saved.assigned_ip
+			instance.configured_ip = self.template.get("ip")
+			instance.image = self.template["image"]
+			instance.ports = self.template.get("ports")
+			instance.env = self.template.get("env")
+			instance.command = self.template.get("command")
+			return instance
 
 	def to_json(self):
 		return {

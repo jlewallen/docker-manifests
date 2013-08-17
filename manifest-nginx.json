@@ -1,11 +1,9 @@
 {
-    "nginx": [
-        {
-            "container": "9e88a25e8e29",
-            "image": "jlewallen/nginx",
-            "ports": [
-                "80:80"
-            ]
-        }
-    ]
+    "nginx": {
+			"template": {
+				"container": "9e88a25e8e29",
+				"image": "jlewallen/nginx",
+				"ports": [ "80:80" ]
+			}
+    }
 }
