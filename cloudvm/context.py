@@ -43,8 +43,14 @@ class State:
 			return pickle.load(open(path))
 		return State(path)
 
-	def update(self, long_id, instance):
-		self.containers[long_id] = instance
+	def purge(self, ctx):
+		for name, instance in self.containers.items():
+			if not instance.exists(ctx.docker):
+				ctx.info("purging %s" % name)
+				del self.containers[name]
+
+	def update(self, name, instance):
+		self.containers[name] = instance
 
 	def assigned_ips(self):
 		ips = []

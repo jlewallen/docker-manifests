@@ -13,6 +13,7 @@ class WebService:
 		self.manifest = Manifest.load(self.path, self.ctx)
 		self.machine = HostMachine()
 		self.manifest.update(self.ctx)
+		self.ctx.state.purge(self.ctx)
 
 	def startManifest(self):
 		self.manifest.provision(self.ctx)

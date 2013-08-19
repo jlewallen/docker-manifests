@@ -44,6 +44,7 @@ def main():
 
 	for path in options.manifests:
 		ctx.state = State.load(path + ".state")
+		ctx.state.purge(ctx)
 		manifest = Manifest.load(path, ctx)
 		if options.stop:
 			manifest.stop(ctx)
