@@ -13,6 +13,8 @@ class GroupType:
 
 	@staticmethod
 	def get(name):
+		if name is None:
+			return GroupType
 		return eval(name.title())
 
 class Cassandra(GroupType):
@@ -36,9 +38,7 @@ class Group:
 		self.instances = []
 
 	def make_type(self):
-		klass = GroupType
-		if type:
-			klass = GroupType.get(self.type_name)
+		klass = GroupType.get(self.type_name)
 		return klass(self)
 
 	def size(self):

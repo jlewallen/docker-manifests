@@ -17,7 +17,7 @@ class Instance:
 		self.name = name
 		self.image = None
 		self.ports = None
-		self.env = None
+		self.env = {}
 		self.command = None
 		self.short_id = None
 		self.long_id = None
@@ -49,7 +49,7 @@ class Instance:
 			return False
 
 	def make_params(self, group_type):
-		env = dict(self.env.items() + group_type.environment(self).items())
+		env = dict((self.env.items() if self.env else []) + group_type.environment(self).items())
 		params = {
 			'image':        self.image,
 			'ports':        self.ports,

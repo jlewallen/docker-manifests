@@ -1,0 +1,8 @@
+{
+	"zookeeper" : {
+		"template": {
+			"image": "jlewallen/zookeeper",
+			"ip" : "true"
+		}
+	}
+}
