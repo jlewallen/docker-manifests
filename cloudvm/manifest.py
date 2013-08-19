@@ -18,8 +18,11 @@ class Manifest:
 		for group_name in manifest_cfg:
 			group_cfg = manifest_cfg[group_name]
 			template = group_cfg["template"]
-			group = Group(group_name, template)
-			group.resize(ctx, 1)
+			type = group_cfg.get("type")
+			number = group_cfg.get("number")
+			if not number: number = 1
+			group = Group(group_name, type, template)
+			group.resize(ctx, number)
 			manifest.groups.append(group)
 		return manifest
 

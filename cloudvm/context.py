@@ -56,10 +56,10 @@ class State:
 
 	def allocate_ip(self):
 		assigned = self.assigned_ips()
-		print assigned
 		for i in range(11, 255):
 			ip = Configuration.get_offset_ip(i)
-			if ip not in assigned: return ip
+			if ip not in assigned:
+				return ip
 		raise "No more IPs available"
 
 	def get(self, long_id):

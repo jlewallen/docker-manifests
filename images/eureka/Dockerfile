@@ -7,5 +7,5 @@ add server.xml /opt/tomcat/conf/server.xml
 
 expose 80
 
-entrypoint /opt/tomcat/bin/start
+entrypoint ["/opt/tomcat/bin/start"]
 

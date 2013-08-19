@@ -7,4 +7,4 @@ run chmod 755 /opt/tomcat/bin/start
 
 expose 8080
 
-entrypoint /opt/tomcat/bin/start
+entrypoint ["/opt/tomcat/bin/start"]

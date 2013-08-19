@@ -1,0 +1,15 @@
+{
+	"cassandra" : {
+		"type": "cassandra",
+		"number": 2,
+		"template": {
+			"image": "jlewallen/cassandra",
+			"ip" : "true",
+			"env" : {
+				"CASS_SEEDS" : "192.168.0.211",
+				"CASS_TOKEN" : "0",
+				"CASS_LOCAL_IP" : "192.168.0.211"
+			}
+		}
+	}
+}

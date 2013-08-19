@@ -12,7 +12,8 @@ import copy
 from context import *
 
 class Instance:
-	def __init__(self, name):
+	def __init__(self, index, name):
+		self.index = index
 		self.name = name
 		self.image = None
 		self.ports = None
@@ -47,11 +48,12 @@ class Instance:
 		except:
 			return False
 
-	def make_params(self):
+	def make_params(self, group_type):
+		env = dict(self.env.items() + group_type.environment(self).items())
 		params = {
 			'image':        self.image,
 			'ports':        self.ports,
-			'environment':  self.env,
+			'environment':  list({ k + "=" + str(v) for k, v in env.items() }),
 			'command':      self.command,
 			'detach':       True,
 			'hostname':     self.name,
@@ -61,7 +63,14 @@ class Instance:
 	def needs_ip(self):
 		return self.configured_ip is not None
 
-	def provision(self, ctx):
+	def configure(self, group_type, ctx):
+		if self.needs_ip():
+			self.assigned_ip = self.allocate_ip(ctx)
+		else:
+			self.assigned_ip = None
+		ctx.state.update(self.name, self)
+
+	def provision(self, group_type, ctx):
 		docker = ctx.docker
 		if self.exists(docker):
 			if self.is_running(docker):
@@ -72,7 +81,7 @@ class Instance:
 				docker.start(self.short_id)
 		else:
 			ctx.info("%s: creating instance" % (self.name))
-			params = self.make_params()
+			params = self.make_params(group_type)
 			container = docker.create_container(**params)
 			self.short_id = container['Id']
 			docker.start(self.short_id)
@@ -85,7 +94,7 @@ class Instance:
 		if self.needs_ip():
 			if self.has_host_mapping():
 				raise Exception("Host port mappings and IP configurations are mutually exclusive.")
-			self.configure_networking(ctx, self.short_id, self.long_id, "br0", self.allocate_ip(ctx))
+			self.configure_networking(ctx, self.short_id, self.long_id, "br0", self.assigned_ip)
 		ctx.state.update(self.name, self)
 		return self.short_id
 
@@ -103,7 +112,8 @@ class Instance:
 	def calculate_ip(self):
 		configured = self.configured_ip
 		m = re.match(r"^\+(\d+)", configured)
-		if m: return Configuration.get_offset_ip(int(m.group(0)))
+		if m:
+			return Configuration.get_offset_ip(int(m.group(0)))
 		return configured
 
 	def configure_networking(self, ctx, short_id, long_id, bridge, ip):
@@ -197,11 +207,3 @@ class Instance:
 			"destroy_url" : "/instances/%s/destroy" % self.name,
 			"kill_url" : "/instances/%s/kill" % self.name
 		}
-
-	def clone(self, new_name):
-		clone = Instance(new_name)
-		clone.image = self.image
-		clone.ports = self.ports
-		clone.env = self.env
-		clone.command = self.command
-		return clone

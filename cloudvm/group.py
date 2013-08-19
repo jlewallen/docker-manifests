@@ -4,14 +4,49 @@
 
 from instance import *
 
+class GroupType:
+	def __init__(self, group):
+		self.group = group
+
+	def environment(self, instance):
+		return {}
+
+	@staticmethod
+	def get(name):
+		return eval(name.title())
+
+class Cassandra(GroupType):
+	def __init__(self, group):
+		self.group = group
+
+	def environment(self, instance):
+		number = self.group.size()
+		tokens = [((2**64 / number) * i) - 2**63 for i in range(number)]
+		return {
+			"CASS_SEEDS" : self.group.instances[0].assigned_ip,
+			"CASS_TOKEN" : tokens[instance.index],
+			"CASS_LOCAL_IP" : instance.assigned_ip
+		}
+
 class Group:
-	def __init__(self, name, template):
+	def __init__(self, name, type_name, template):
 		self.name = name
+		self.type_name = type_name
 		self.template = template
 		self.instances = []
 
+	def make_type(self):
+		klass = GroupType
+		if type:
+			klass = GroupType.get(self.type_name)
+		return klass(self)
+
+	def size(self):
+		return len(self.instances)
+
 	def provision(self, ctx):
-		map(lambda i: i.provision(ctx), self.instances)
+		map(lambda i: i.configure(self.make_type(), ctx), self.instances)
+		map(lambda i: i.provision(self.make_type(), ctx), self.instances)
 
 	def stop(self, ctx):
 		map(lambda i: i.stop(ctx), self.instances)
@@ -65,9 +100,10 @@ class Group:
 			currentSize = len(self.instances)
 
 	def new_instance(self, ctx):
-			name = "%s-%d" % (self.name, len(self.instances))
+			index = len(self.instances)
+			name = "%s-%d" % (self.name, index)
 			saved = ctx.state.get(name)
-			instance = Instance(name)
+			instance = Instance(index, name)
 			if saved:
 				instance.short_id = saved.short_id
 				instance.assigned_ip = saved.assigned_ip

@@ -3,7 +3,6 @@
 import os
 
 from cloudvm.dashboard.app import app
-from cloudvm.dashboard.controllers import *
 
 if __name__ == '__main__':
   port = int(os.environ.get('PORT', 5000))
