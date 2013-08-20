@@ -21,6 +21,7 @@ def get_options():
 	parser.add_option("--kill-all", action="store_true", dest="kill_all", default=False, help="kill all")
 	parser.add_option("--stop", action="store_true", dest="stop", default=False, help="stop instances")
 	parser.add_option("--kill", action="store_true", dest="kill", default=False, help="kill instances")
+	parser.add_option("--web", action="store_true", dest="web", default=False, help="run web server")
 	raw_options, args = parser.parse_args()
 	return Options(vars(raw_options), args)
 
@@ -30,6 +31,12 @@ def main():
 
 	if os.geteuid() != 0:
 		exit("You need to have root privileges to run this script.\nPlease try again, this time using 'sudo'. Exiting.")
+
+	if options.web:
+		from cloudvm.dashboard.app import app
+		port = int(os.environ.get('PORT', 5000))
+		app.run(host='0.0.0.0', port=port)
+		return
 
 	ctx = Context(docker, None, None)
 

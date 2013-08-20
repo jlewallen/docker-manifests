@@ -92,11 +92,15 @@ class Group:
 				instance = self.new_instance(ctx)
 				added.append(instance)
 				self.instances.append(instance)
+				instance.configure(self.make_type(), ctx)
+				instance.provision(self.make_type(), ctx)
 			else:
 				ctx.info("removing from group %s" % self.name)
 				instance = self.instances[currentSize - 1]
 				removed.append(instance)
 				self.instances.remove(instance)
+				instance.kill(ctx)
+				instance.destroy(ctx)
 			currentSize = len(self.instances)
 
 	def new_instance(self, ctx):
