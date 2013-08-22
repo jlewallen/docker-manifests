@@ -11,15 +11,17 @@ import logging
 import iptools
 import netifaces
 
+from collections import defaultdict
 from urlparse import urlparse
 
 class Context:
 	def __init__(self, docker, cfg, state):
+		formatting = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+		logging.basicConfig(format = formatting, stream = sys.stdout, level = logging.INFO)
+
 		self.docker = docker
 		self.cfg = cfg
 		self.state = state
-		formatting = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-		logging.basicConfig(format = formatting, stream = sys.stdout, level = logging.INFO)
 		self.log = logging.getLogger('dock')
 		self.log.info("local ip: %s" % Configuration.get_local_ip())
 
@@ -35,6 +37,7 @@ class Context:
 class State:
 	def __init__(self, path):
 		self.path = path
+		self.groups = defaultdict(set)
 		self.containers = {}
 
 	@staticmethod
@@ -48,8 +51,14 @@ class State:
 			if not instance.exists(ctx.docker):
 				ctx.info("purging %s" % name)
 				del self.containers[name]
+				for group_name in self.groups:
+					self.groups[group_name].remove(name)
 
-	def update(self, name, instance):
+	def group(self, group_name):
+		return len(self.groups[group_name])
+
+	def update(self, group_name, name, instance):
+		self.groups[group_name].add(name)
 		self.containers[name] = instance
 
 	def assigned_ips(self):

@@ -92,8 +92,8 @@ class Group:
 				instance = self.new_instance(ctx)
 				added.append(instance)
 				self.instances.append(instance)
-				instance.configure(self.make_type(), ctx)
-				instance.provision(self.make_type(), ctx)
+				# instance.configure(self.make_type(), ctx)
+				# instance.provision(self.make_type(), ctx)
 			else:
 				ctx.info("removing from group %s" % self.name)
 				instance = self.instances[currentSize - 1]
@@ -107,7 +107,7 @@ class Group:
 			index = len(self.instances)
 			name = "%s-%d" % (self.name, index)
 			saved = ctx.state.get(name)
-			instance = Instance(index, name)
+			instance = Instance(self.name, index, name)
 			if saved:
 				instance.short_id = saved.short_id
 				instance.assigned_ip = saved.assigned_ip

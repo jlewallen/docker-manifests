@@ -12,7 +12,8 @@ import copy
 from context import *
 
 class Instance:
-	def __init__(self, index, name):
+	def __init__(self, group_name, index, name):
+		self.group_name = group_name
 		self.index = index
 		self.name = name
 		self.image = None
@@ -68,7 +69,7 @@ class Instance:
 			self.assigned_ip = self.allocate_ip(ctx)
 		else:
 			self.assigned_ip = None
-		ctx.state.update(self.name, self)
+		ctx.state.update(self.group_name, self.name, self)
 
 	def provision(self, group_type, ctx):
 		docker = ctx.docker
@@ -95,7 +96,6 @@ class Instance:
 			if self.has_host_mapping():
 				raise Exception("Host port mappings and IP configurations are mutually exclusive.")
 			self.configure_networking(ctx, self.short_id, self.long_id, "br0", self.assigned_ip)
-		ctx.state.update(self.name, self)
 		return self.short_id
 
 	def has_host_mapping(self):
