@@ -31,6 +31,9 @@ class Context:
 	def save(self):
 		if self.state: self.state.save()
 
+	def self_ip(self):
+		return Configuration.get_offset_ip(0)
+
 	def allocate_ip(self):
 		return self.state.allocate_ip()
 
@@ -52,7 +55,8 @@ class State:
 				ctx.info("purging %s" % name)
 				del self.containers[name]
 				for group_name in self.groups:
-					self.groups[group_name].remove(name)
+					group = self.groups.get(group_name)
+					if group and name in group: group.remove(name)
 
 	def group(self, group_name):
 		return len(self.groups[group_name])

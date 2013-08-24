@@ -27,7 +27,8 @@ class Cassandra(GroupType):
 		return {
 			"CASS_SEEDS" : self.group.instances[0].assigned_ip,
 			"CASS_TOKEN" : tokens[instance.index],
-			"CASS_LOCAL_IP" : instance.assigned_ip
+			"CASS_LOCAL_IP" : instance.assigned_ip,
+			"CASS_NAME" : self.group.name
 		}
 
 class Group:

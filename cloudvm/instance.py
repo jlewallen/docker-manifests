@@ -51,13 +51,15 @@ class Instance:
 
 	def make_params(self, group_type):
 		env = dict((self.env.items() if self.env else []) + group_type.environment(self).items())
+		hostname = self.assigned_ip
+		if not self.assigned_ip: hostname = Configuration.get_offset_ip(0)
 		params = {
 			'image':        self.image,
 			'ports':        self.ports,
 			'environment':  list({ k + "=" + str(v) for k, v in env.items() }),
 			'command':      self.command,
 			'detach':       True,
-			'hostname':     self.name,
+			'hostname':     hostname
 		}
 		return params
 
