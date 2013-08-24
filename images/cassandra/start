@@ -13,4 +13,9 @@ sed -i "s/{{LOCAL_IP}}/$CASS_LOCAL_IP/g" /opt/cassandra/conf/cassandra-env.sh
 HOST=`hostname`
 echo "127.0.0.1 $HOST" >> /etc/hosts
 
+echo "eureka.port=8080" >> /opt/tomcat/conf/cataline.properties
+echo "eureka.name=cassandra" >> /opt/tomcat/conf/cataline.properties
+
+/opt/tomcat/bin/catalina.sh start
+
 /opt/cassandra/bin/cassandra -f

@@ -1,4 +1,4 @@
-from jlewallen/base
+from jlewallen/tomcat
 
 maintainer Jacob Lewallen
 
@@ -21,4 +21,4 @@ expose 9160
 expose 9042
 
 entrypoint [ "/opt/cassandra/bin/start" ]
-
+cmd [""]
