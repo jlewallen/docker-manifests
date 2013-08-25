@@ -128,7 +128,8 @@ class Instance:
 		while True:
 			try:
 				npsid = open("/sys/fs/cgroup/devices/lxc/" + long_id + "/tasks", "r").readline().strip()
-				break
+				if npsid:
+					break
 			except IOError:
 				ctx.info("%s: waiting for container %s cgroup" % (self.name, short_id))
 				time.sleep(0.1)
@@ -149,8 +150,14 @@ class Instance:
 		]
 
 		for command in commands:
-			if os.system(command) != 0:
-				raise Exception("Error configuring networking: '%s' failed!" % command)
+			for i in range(0, 2):
+				if os.system(command) != 0:
+					if i == 1:
+						raise Exception("Error configuring networking: '%s' failed!" % command)
+					else:
+						time.sleep(0.5)
+				else:
+					break
 
 		self.assigned_ip = ip
 
