@@ -12,11 +12,15 @@ angular.module("dashboard", []).
     $locationProvider.html5Mode(true);
 }]);
 
-function IndexController($scope, $http) {
+function LayoutCtrl($rootScope) {
+	$rootScope.busy = true;
+}
+
+function IndexController($scope, $rootScope, $http) {
   function post(url) {
-    $scope.busy = true;
+    $rootScope.busy = true;
     return $http.post(url).success(function(data) {
-      $scope.busy = false;
+      $rootScope.busy = false;
     });
   }
 
@@ -26,10 +30,10 @@ function IndexController($scope, $http) {
 		$scope.model.manifest.can_kill = _.reduce($scope.model.manifest.groups, function(memo, group) { return memo || group.any_running; }, false);
 	}
 
-  $scope.busy = true;
+  $rootScope.busy = true;
   $http.get('/status').success(function(data) {
 		store(data);
-    $scope.busy = false;
+    $rootScope.busy = false;
   });
 
   $scope.startManifest = function() {
