@@ -126,13 +126,14 @@ class Instance:
 		# poll for the file, it'll be created when the container starts
 		# up and we should spend very little time waiting
 		while True:
+			path = "/sys/fs/cgroup/devices/lxc/" + long_id + "/tasks"
 			try:
-				npsid = open("/sys/fs/cgroup/devices/lxc/" + long_id + "/tasks", "r").readline().strip()
+				npsid = open(path, "r").readline().strip()
 				if npsid:
 					break
 			except IOError:
-				ctx.info("%s: waiting for container %s cgroup" % (self.name, short_id))
-				time.sleep(0.1)
+				ctx.info("%s: waiting for container %s cgroup (%s)" % (self.name, short_id, path))
+				time.sleep(0.2)
 
 		ctx.info("%s: configuring %s networking, assigning %s" % (self.name, short_id, ip))
 

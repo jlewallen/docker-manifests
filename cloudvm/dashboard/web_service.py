@@ -5,10 +5,10 @@
 from cloudvm.models import *
 
 class WebService:
-	def __init__(self):
-		self.path = "manifest-cassandra.json"
+	def __init__(self, options):
+		self.path = options.manifests[0]
 		self.docker = Configuration.get_docker()
-		self.state = State.load(self.path + ".state")
+		self.state = State.load(options.state_file_path)
 		self.ctx = Context(self.docker, None, self.state)
 		self.manifest = Manifest.load(self.path, self.ctx)
 		self.machine = HostMachine()

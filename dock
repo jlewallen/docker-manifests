@@ -22,6 +22,7 @@ def get_options():
 	parser.add_option("--stop", action="store_true", dest="stop", default=False, help="stop instances")
 	parser.add_option("--kill", action="store_true", dest="kill", default=False, help="kill instances")
 	parser.add_option("--web", action="store_true", dest="web", default=False, help="run web server")
+	parser.add_option("--state", dest="state_file_path", default="dock.state", metavar="FILE", help="state file")
 	raw_options, args = parser.parse_args()
 	return Options(vars(raw_options), args)
 
@@ -35,10 +36,11 @@ def main():
 	if options.web:
 		from cloudvm.dashboard.app import app
 		port = int(os.environ.get('PORT', 5000))
+		app.options = options
 		app.run(host='0.0.0.0', port=port)
 		return
 
-	ctx = Context(docker, None, None)
+	ctx = Context(docker, None, State.load(options.state_file_path))
 
 	if options.kill_all:
 		HostMachine().kill_all(ctx)
@@ -50,7 +52,6 @@ def main():
 		HostMachine().delete_images(ctx)
 
 	for path in options.manifests:
-		ctx.state = State.load(path + ".state")
 		ctx.state.purge(ctx)
 		manifest = Manifest.load(path, ctx)
 		if options.stop:

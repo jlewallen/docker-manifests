@@ -14,11 +14,12 @@ from flask import jsonify, json
 from cloudvm.dashboard.web_service import WebService
 
 app = Flask(__name__)
-app.web = WebService()
 app.debug = True
 app.url_map.strict_slashes = False
 
 def get_web():
+	if not hasattr(app, 'web'):
+		app.web = WebService(app.options)
 	return current_app.web
 
 @app.route("/")
