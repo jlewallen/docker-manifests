@@ -27,4 +27,4 @@ run cd /opt && wget http://apache.spinellicreations.com/tomcat/tomcat-7/v7.0.42/
 run cd /opt && tar zxf apache-tomcat-*.tar.gz
 run rm /opt/*.tar.gz
 run mv /opt/apache-tomcat-* /opt/tomcat
-
+add pause-for-iface.sh /usr/bin/pause-for-iface.sh
