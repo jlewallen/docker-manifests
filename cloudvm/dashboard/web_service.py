@@ -6,7 +6,7 @@ from cloudvm.models import *
 
 class WebService:
 	def __init__(self, options):
-		self.docker = Configuration.get_docker()
+		self.docker = Context.get_docker()
 		self.state = State.load(options.state_file_path)
 		self.ctx = Context(self.docker, None, self.state)
 		self.manifests = map(lambda path: Manifest.load(path, self.ctx), options.manifests)

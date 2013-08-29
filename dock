@@ -28,7 +28,7 @@ def get_options():
 
 def main():
 	options = get_options()
-	docker = Configuration.get_docker()
+	docker = Context.get_docker()
 
 	if os.geteuid() != 0:
 		exit("You need to have root privileges to run this script.\nPlease try again, this time using 'sudo'. Exiting.")

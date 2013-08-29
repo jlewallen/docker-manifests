@@ -71,7 +71,7 @@ class Instance:
 			self.assigned_ip = self.allocate_ip(ctx)
 		else:
 			self.assigned_ip = None
-		ctx.state.update(self.group_name, self.name, self)
+		ctx.update(self.group_name, self.name, self)
 
 	def provision(self, group_type, ctx):
 		docker = ctx.docker
@@ -109,7 +109,7 @@ class Instance:
 
 	def allocate_ip(self, ctx):
 		if self.assigned_ip: return self.assigned_ip
-		return ctx.allocate_ip()
+		return ctx.networking.allocate_ip()
 
 	def calculate_ip(self):
 		configured = self.configured_ip
