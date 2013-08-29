@@ -134,8 +134,11 @@ class Instance:
 			except IOError:
 				ctx.info("%s: waiting for container %s cgroup (%s)" % (self.name, short_id, path))
 				time.sleep(0.2)
+				if not self.is_running(ctx.docker):
+					ctx.info("%s: stopped, aborting" % (self.name))
+					return
 
-		ctx.info("%s: configuring %s networking, assigning %s" % (self.name, short_id, ip))
+		ctx.info("%s: configuring %s networking, assigning %s (%s)" % (self.name, short_id, ip, npsid))
 
 		# strategy from unionize.sh
 		commands = [
@@ -151,16 +154,17 @@ class Instance:
 		]
 
 		for command in commands:
-			for i in range(0, 2):
-				if os.system(command) != 0:
-					if i == 1:
-						raise Exception("Error configuring networking: '%s' failed!" % command)
-					else:
-						time.sleep(0.5)
-				else:
-					break
+			self._execute(command)
 
 		self.assigned_ip = ip
+
+	def _execute(self, command):
+		for i in range(0, 5):
+			if os.system(command) != 0:
+				time.sleep(1)
+			else:
+				return True
+		raise Exception("Error configuring networking: '%s' failed!" % command)
 
 	def stop(self, ctx):
 		docker = ctx.docker

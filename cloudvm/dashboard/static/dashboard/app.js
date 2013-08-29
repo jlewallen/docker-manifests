@@ -26,8 +26,6 @@ function IndexController($scope, $rootScope, $http) {
 
 	function store(data) {
     $scope.model = data;
-		$scope.model.manifest.can_destroy = _.reduce($scope.model.manifest.groups, function(memo, group) { return memo && !group.any_running && group.any_created; }, true);
-		$scope.model.manifest.can_kill = _.reduce($scope.model.manifest.groups, function(memo, group) { return memo || group.any_running; }, false);
 	}
 
   $rootScope.busy = true;
@@ -36,20 +34,20 @@ function IndexController($scope, $rootScope, $http) {
     $rootScope.busy = false;
   });
 
-  $scope.startManifest = function() {
-    post($scope.model.manifest.start_url).success(function(data) {
+  $scope.start = function() {
+    post($scope.model.start_url).success(function(data) {
 			store(data);
     });
   }
 
-  $scope.killManifest = function() {
-    post($scope.model.manifest.kill_url).success(function(data) {
+  $scope.kill = function() {
+    post($scope.model.kill_url).success(function(data) {
 			store(data);
     });
   }
 
-  $scope.destroyManifest = function() {
-    post($scope.model.manifest.destroy_url).success(function(data) {
+  $scope.destroy = function() {
+    post($scope.model.destroy_url).success(function(data) {
 			store(data);
     });
   }

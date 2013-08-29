@@ -81,6 +81,9 @@ class Group:
 			if instance.running: return True
 		return False
 
+	def are_all_stopped(self):
+		return not self.are_any_running()
+
 	def resize(self, ctx, newSize):
 		if newSize == 0: raise Exception("Can't remove all instances, just stop the group.")
 		currentSize = len(self.instances)

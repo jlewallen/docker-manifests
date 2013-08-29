@@ -30,6 +30,8 @@ class Manifest:
 		return {
 			'name' : self.name,
 			'groups' : map(lambda g: g.to_json(), self.groups),
+			'all_stopped' : self.are_all_stopped(),
+			'any_running' : self.are_any_running(),
 			"start_url" : "/manifests/0/start",
 			"kill_url" : "/manifests/0/kill",
 			"destroy_url" : "/manifests/0/destroy"
@@ -60,24 +62,34 @@ class Manifest:
 		return None
 	
 	def provisionGroup(self, ctx, name):
-		self.group(name).provision(ctx)
+		group = self.group(name)
+		if group: group.provision(ctx)
 		self.update(ctx)
 
 	def killGroup(self, ctx, name):
-		self.group(name).kill(ctx)
+		group = self.group(name)
+		if group: group.kill(ctx)
 		self.update(ctx)
 
 	def destroyGroup(self, ctx, name):
-		self.group(name).destroy(ctx)
+		group = self.group(name)
+		if group: group.destroy(ctx)
 		self.update(ctx)
 
 	def resizeGroup(self, ctx, name, size):
-		self.group(name).resize(ctx, size)
+		group = self.group(name)
+		if group: group.resize(ctx, size)
 		self.update(ctx)
 
 	def update(self, ctx):
 		map(lambda group: group.update(ctx), self.groups)
-	
+
+	def are_all_stopped(self):
+		return reduce(lambda memo, group: memo and group.are_all_stopped(), self.groups, True)
+
+	def are_any_running(self):
+		return reduce(lambda memo, group: memo or group.are_any_running(), self.groups, False)
+
 	def find_instance(self, name):
 		for group in self.groups:
 			for instance in group.instances:
