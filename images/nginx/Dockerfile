@@ -2,6 +2,7 @@ from jlewallen/base
 
 maintainer Jacob Lewallen
 
+run apt-get install -y nginx
 add nginx-default /etc/nginx/sites-available/default
 
 expose 80

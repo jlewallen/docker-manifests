@@ -49,7 +49,11 @@ class WebService:
 		self.save()
 		return self.to_status_json()
 
+	def start(self):
+		self.ctx.state.purge(self.ctx)
+
 	def save(self):
+		self.ctx.state.purge(self.ctx)
 		self.ctx.save()
 
 	def to_status_json(self):

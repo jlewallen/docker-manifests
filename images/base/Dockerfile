@@ -6,7 +6,7 @@ run apt-get install -y python-software-properties
 run echo "deb http://archive.ubuntu.com/ubuntu precise main universe" > /etc/apt/sources.list
 run add-apt-repository -y ppa:webupd8team/java
 run apt-get update
-run apt-get install -y vim wget curl tmux  git 
+run apt-get install -y vim wget curl tmux git 
 
 run echo debconf shared/accepted-oracle-license-v1-1 select true | debconf-set-selections && echo debconf shared/accepted-oracle-license-v1-1 seen true | debconf-set-selections
 run apt-get install -y oracle-java7-installer

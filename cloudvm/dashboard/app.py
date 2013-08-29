@@ -20,6 +20,7 @@ app.url_map.strict_slashes = False
 def get_web():
 	if not hasattr(app, 'web'):
 		app.web = WebService(app.options)
+	current_app.web.start()
 	return current_app.web
 
 @app.route("/")
