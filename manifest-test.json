@@ -3,7 +3,7 @@
 			"template": {
 				"container": null,
         "image": "jlewallen/nginx",
-        "ip": "+1",
+        "ip": "true",
         "ports": []
       }
     },
@@ -11,7 +11,7 @@
 			"template": {
 				"container": null,
         "image": "jlewallen/nginx",
-        "ip": "+3",
+        "ip": "true",
         "ports": []
       }
     }

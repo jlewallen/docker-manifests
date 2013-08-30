@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <title>Docker Dashboard</title>
     <script type="text/javascript" src="/static/angular/angular.min.js"></script>
+    <script type="text/javascript" src="/static/angular/angular-route.min.js"></script>
     <script type="text/javascript" src="/static/underscore/underscore-min.js"></script>
     <script type="text/javascript" src="/static/dashboard/app.js"></script>
     <link rel="stylesheet" href="/static/bootstrap/bootstrap.min.css">
@@ -13,7 +14,7 @@
     <div id="header" class="header navbar navbar-static-top">
       <div class="navbar-inner">
         <div class="container">
-          <a class="navbar-brand" href="/">Docker Dashboard</a>
+          <a class="navbar-brand" href="#/">Docker Dashboard</a>
 					<div class="busy" ng-show="busy">&nbsp;</div>
         </div>
       </div>
@@ -25,7 +26,7 @@
       <hr>
       <footer id="footer" class="footer">
         <div class="footer-left">
-          <a href="/">Home</a>
+          <a href="#/">Home</a>
         </div>
         <div class="footer-right">
           <span>&copy; Jacob Lewallen 2013</span>

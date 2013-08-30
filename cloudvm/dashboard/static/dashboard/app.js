@@ -1,7 +1,7 @@
 'use strict';
 
 
-angular.module("dashboard", []).
+var app = angular.module("dashboard", [ 'ngRoute' ]).
   config(['$routeProvider', '$locationProvider', function($routeProvider, $locationProvider) {
     $routeProvider.when('/', {
       templateUrl: '/static/partials/landing.html',
@@ -14,21 +14,69 @@ angular.module("dashboard", []).
     $routeProvider.otherwise({
       redirectTo: '/'
     });
-    // $locationProvider.html5Mode(true);
 }]);
 
-function LayoutCtrl($rootScope) {
-	$rootScope.busy = true;
+app.config(function($httpProvider) {
+  $httpProvider.interceptors.push(function($q) {
+    return {
+      'request': function(config) {
+        return config;
+      },
+      'response': function(response) {
+        return response;
+      }
+    }
+  });
+});
+
+app.service("dockerService", function($http) {
+  var self = this;
+  self.model = null;
+
+  this.refresh = function() {
+    return $http.get('/status').success(function(data) {
+      self.model = data;
+    });
+  };
+
+  this.getInstance = function(name, callback) {
+    self.refresh().success(function(data) {
+      var instances = _.reduce(_.flatten(_.map(self.model.manifests, function(m) {
+        return _.map(m.groups, function(g) {
+          return g.instances;
+        });
+      })), function(memo, i) {
+        memo[i.name] = i;
+        return memo;
+      },
+      {});
+      callback(instances[name]);
+    });
+  };
+
+  this.getLogs = function(name) {
+    return $http.get("/instances/" + name + "/logs");
+  };
+});
+
+function LayoutCtrl($rootScope, $http) {
+	$rootScope.busy = true; // Make a stack for concurrent busy, or even an angular http interceptor
 }
 
-function LogsController($scope, $routeParams, $rootScope, $http) {
-	$http.get("/instances/" + $routeParams.name + "/logs").success(function(data) {
-    $scope.model = { logs : data };
+function LogsController($scope, $routeParams, $rootScope, $http, dockerService) {
+  $rootScope.busy = true;
+  $scope.model = { };
+	dockerService.getLogs($routeParams.name).success(function(data) {
+    $scope.model.logs = data;
+    $rootScope.busy = false;
+  });
+  dockerService.getInstance($routeParams.name, function(data) {
+    $scope.model.instance = data;
     $rootScope.busy = false;
   });
 }
 
-function IndexController($scope, $rootScope, $http) {
+function IndexController($scope, $rootScope, $http, dockerService) {
   function post(url) {
     $rootScope.busy = true;
     return $http.post(url).success(function(data) {
@@ -41,7 +89,7 @@ function IndexController($scope, $rootScope, $http) {
 	}
 
   $rootScope.busy = true;
-  $http.get('/status').success(function(data) {
+  dockerService.refresh().success(function(data) {
 		store(data);
     $rootScope.busy = false;
   });
