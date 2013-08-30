@@ -6,6 +6,8 @@ import json
 
 from group import *
 
+log = logging.getLogger('dock')
+
 class Manifest:
 	def __init__(self, name):
 		self.name = name

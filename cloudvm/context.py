@@ -13,6 +13,8 @@ from interfaces import *
 from collections import defaultdict
 from urlparse import urlparse
 
+log = logging.getLogger('dock')
+
 class Context:
 	def __init__(self, docker, cfg, state):
 		formatting = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
@@ -21,14 +23,10 @@ class Context:
 		self.docker = docker
 		self.cfg = cfg
 		self.state = state
-		self.log = logging.getLogger('dock')
-		self.networking = Networking(self.log, self.state)
+		self.networking = Networking(self.state)
 
 	def update(self, group_name, name, instance):
 		self.state.update(group_name, name, instance)
-
-	def info(self, m):
-		self.log.info(m)
 
 	def save(self):
 		if self.state: self.state.save()
@@ -53,7 +51,7 @@ class State:
 	def purge(self, ctx):
 		for name, instance in self.containers.items():
 			if not instance.exists(ctx.docker):
-				ctx.info("purging %s" % name)
+				log.info("purging %s" % name)
 				del self.containers[name]
 				for group_name in self.groups:
 					group = self.groups.get(group_name)

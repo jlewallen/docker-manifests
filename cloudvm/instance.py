@@ -11,6 +11,8 @@ import copy
 
 from context import *
 
+log = logging.getLogger('dock')
+
 class Instance:
 	def __init__(self, group_name, index, name):
 		self.group_name = group_name
@@ -24,6 +26,7 @@ class Instance:
 		self.long_id = None
 		self.assigned_ip = None
 		self.configured_ip = None
+		self.interface = None
 		self.running = False
 		self.created = False
 
@@ -52,7 +55,8 @@ class Instance:
 	def make_params(self, group_type):
 		env = dict((self.env.items() if self.env else []) + group_type.environment(self).items())
 		hostname = self.assigned_ip
-		if not self.assigned_ip: hostname = Configuration.get_offset_ip(0)
+		if not self.assigned_ip:
+			hostname = Networking.get_offset_ip(0)
 		params = {
 			'image':        self.image,
 			'ports':        self.ports,
@@ -68,8 +72,10 @@ class Instance:
 
 	def configure(self, group_type, ctx):
 		if self.needs_ip():
-			self.assigned_ip = self.allocate_ip(ctx)
+			self.interface = self.get_interface(ctx)
+			self.assigned_ip = self.interface.ip
 		else:
+			self.interface = None
 			self.assigned_ip = None
 		ctx.update(self.group_name, self.name, self)
 
@@ -77,27 +83,25 @@ class Instance:
 		docker = ctx.docker
 		if self.exists(docker):
 			if self.is_running(docker):
-				ctx.info("%s: skipping, %s is running" % (self.name, self.short_id))
+				log.info("%s: skipping, %s is running" % (self.name, self.short_id))
 				return self.short_id
 			else:
-				ctx.info("%s: %s exists, starting" % (self.name, self.short_id))
+				log.info("%s: %s exists, starting" % (self.name, self.short_id))
 				docker.start(self.short_id)
 		else:
-			ctx.info("%s: creating instance" % (self.name))
+			log.info("%s: creating instance" % (self.name))
 			params = self.make_params(group_type)
 			container = docker.create_container(**params)
 			self.short_id = container['Id']
 			docker.start(self.short_id)
-			ctx.info("%s: instance started %s" % (self.name, self.short_id))
+			log.info("%s: instance started %s" % (self.name, self.short_id))
 
 		# this is all kinds of race condition prone, too bad we
 		# can't do this before we start the container
-		ctx.info("%s: configuring networking %s" % (self.name, self.short_id))
+		log.info("%s: configuring networking %s" % (self.name, self.short_id))
 		self.update(ctx)
 		if self.needs_ip():
-			if self.has_host_mapping():
-				raise Exception("Host port mappings and IP configurations are mutually exclusive.")
-			self.configure_networking(ctx, self.short_id, self.long_id, "br0", self.assigned_ip)
+			self.configure_networking(ctx)
 		return self.short_id
 
 	def has_host_mapping(self):
@@ -107,9 +111,10 @@ class Instance:
 			if re.match(r"\d+:", port): return True
 		return False
 
-	def allocate_ip(self, ctx):
-		if self.assigned_ip: return self.assigned_ip
-		return ctx.networking.allocate_ip()
+	def get_interface(self, ctx):
+		if self.interface:
+			return self.interface
+		return ctx.networking.get_interface()
 
 	def calculate_ip(self):
 		configured = self.configured_ip
@@ -118,72 +123,48 @@ class Instance:
 			return Configuration.get_offset_ip(int(m.group(0)))
 		return configured
 
-	def configure_networking(self, ctx, short_id, long_id, bridge, ip):
-		iface_suffix = Instance.new_id()
-		iface_local_name = "pvnetl%s" % iface_suffix
-		iface_remote_name = "pvnetr%s" % iface_suffix
+	def configure_networking(self, ctx):
+		if self.has_host_mapping():
+			raise Exception("Host port mappings and IP configurations are mutually exclusive.")
+		if self.interface:
+			log.info("%s: assigning interface %s %s" % (self.name, self.interface.name, self.interface.ip))
+			self.nspid = self.get_nspid(ctx)
+			self.interface.assign(self, ctx)
 
-		# poll for the file, it'll be created when the container starts
-		# up and we should spend very little time waiting
+	# poll for the file, it'll be created when the container starts
+	# up and we should spend very little time waiting
+	def get_nspid(self, ctx):
 		while True:
-			path = "/sys/fs/cgroup/devices/lxc/" + long_id + "/tasks"
+			path = "/sys/fs/cgroup/devices/lxc/" + self.long_id + "/tasks"
 			try:
-				npsid = open(path, "r").readline().strip()
-				if npsid:
-					break
+				nspid = open(path, "r").readline().strip()
+				if nspid: return nspid
 			except IOError:
-				ctx.info("%s: waiting for container %s cgroup (%s)" % (self.name, short_id, path))
+				log.info("%s: waiting for container %s cgroup" % (self.name, self.long_id))
 				time.sleep(0.2)
 				if not self.is_running(ctx.docker):
-					ctx.info("%s: stopped, aborting" % (self.name))
-					return
-
-		ctx.info("%s: configuring %s networking, assigning %s (%s)" % (self.name, short_id, ip, npsid))
-
-		# strategy from unionize.sh
-		commands = [
-			"mkdir -p /var/run/netns",
-			"rm -f /var/run/netns/%s" % long_id,
-      "ln -s /proc/%s/ns/net /var/run/netns/%s" % (npsid, long_id),
-      "ip link add name %s type veth peer name %s" % (iface_local_name, iface_remote_name),
-      "brctl addif %s %s" % (bridge, iface_local_name),
-      "ifconfig %s up" % (iface_local_name),
-      "ip link set %s netns %s" % (iface_remote_name, npsid),
-      "ip netns exec %s ip link set %s name eth1" % (long_id, iface_remote_name),
-      "ip netns exec %s ifconfig eth1 %s" % (long_id, ip)
-		]
-
-		for command in commands:
-			self._execute(command)
-
-		self.assigned_ip = ip
-
-	def _execute(self, command):
-		for i in range(0, 5):
-			if os.system(command) != 0:
-				time.sleep(1)
-			else:
-				return True
-		raise Exception("Error configuring networking: '%s' failed!" % command)
+					log.info("%s: stopped, aborting" % (self.name))
+					return None
+		raise "Unable to get namespace PID"
 
 	def stop(self, ctx):
 		docker = ctx.docker
 		if self.is_running(docker):
-			ctx.info("%s: stopping %s" % (self.name, self.short_id))
+			log.info("%s: stopping %s" % (self.name, self.short_id))
 			docker.stop(self.short_id)
 			return self.short_id
 
 	def kill(self, ctx):
 		docker = ctx.docker
 		if self.is_running(docker):
-			ctx.info("%s: killing %s" % (self.name, self.short_id))
+			log.info("%s: killing %s" % (self.name, self.short_id))
 			docker.kill(self.short_id)
 			return self.short_id
 
 	def destroy(self, ctx):
 		docker = ctx.docker
 		if self.created:
-			ctx.info("%s: destroying %s" % (self.name, self.short_id))
+			log.info("%s: destroying %s" % (self.name, self.short_id))
 			docker.remove_container(self.short_id)
 			return self.short_id
 

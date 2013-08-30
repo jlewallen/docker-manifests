@@ -4,6 +4,8 @@
 
 from instance import *
 
+log = logging.getLogger('dock')
+
 class GroupType:
 	def __init__(self, group):
 		self.group = group
@@ -89,17 +91,17 @@ class Group:
 		currentSize = len(self.instances)
 		removed = []
 		added = []
-		ctx.info("resizing group %s oldSize=%d newSize=%d" % (self.name, currentSize, newSize))
+		log.info("resizing group %s oldSize=%d newSize=%d" % (self.name, currentSize, newSize))
 		while currentSize != newSize:
 			if currentSize < newSize:
-				ctx.info("adding to group %s" % self.name)
+				log.info("adding to group %s" % self.name)
 				instance = self.new_instance(ctx)
 				added.append(instance)
 				self.instances.append(instance)
 				# instance.configure(self.make_type(), ctx)
 				# instance.provision(self.make_type(), ctx)
 			else:
-				ctx.info("removing from group %s" % self.name)
+				log.info("removing from group %s" % self.name)
 				instance = self.instances[currentSize - 1]
 				removed.append(instance)
 				self.instances.remove(instance)
