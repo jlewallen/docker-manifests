@@ -14,17 +14,32 @@ class WebService:
 		map(lambda manifest: manifest.update(self.ctx), self.manifests)
 		self.ctx.state.purge(self.ctx)
 
-	def startManifest(self):
+	def startManifests(self):
 		map(lambda manifest: manifest.provision(self.ctx), self.manifests)
 		self.save()
 		return self.to_status_json()
 
-	def killManifest(self):
+	def killManifests(self):
 		map(lambda manifest: manifest.kill(self.ctx), self.manifests)
 		self.save()
 		return self.to_status_json()
 
-	def destroyManifest(self):
+	def destroyManifests(self):
+		map(lambda manifest: manifest.destroy(self.ctx), self.manifests)
+		self.save()
+		return self.to_status_json()
+
+	def startManifest(self, id):
+		map(lambda manifest: manifest.provision(self.ctx), self.manifests)
+		self.save()
+		return self.to_status_json()
+
+	def killManifest(self, id):
+		map(lambda manifest: manifest.kill(self.ctx), self.manifests)
+		self.save()
+		return self.to_status_json()
+
+	def destroyManifest(self, id):
 		map(lambda manifest: manifest.destroy(self.ctx), self.manifests)
 		self.save()
 		return self.to_status_json()
@@ -64,13 +79,22 @@ class WebService:
 						return self.ctx.docker.logs(instance.short_id)
 		raise "No such instance"
 
+	def are_all_stopped(self):
+		return reduce(lambda value, manifest: value and manifest.are_all_stopped(), self.manifests, True)
+
+	def are_any_created(self):
+		return reduce(lambda value, manifest: value or manifest.are_any_created(), self.manifests, False)
+
+	def are_any_running(self):
+		return reduce(lambda value, manifest: value or manifest.are_any_running(), self.manifests, False)
+
 	def to_status_json(self):
 		return {
       'machine' : self.machine.to_json(),
       'manifests' : map(lambda manifest: manifest.to_json(), self.manifests),
-			'can_kill' : reduce(lambda value, manifest: value or manifest.are_any_running(), self.manifests, False),
-			'can_destroy' : reduce(lambda value, manifest: value and manifest.are_all_stopped(), self.manifests, True),
-			"start_url" : "/manifests/0/start",
-			"kill_url" : "/manifests/0/kill",
-			"destroy_url" : "/manifests/0/destroy"
+			'can_kill' : self.are_any_running(),
+			'can_destroy' :  self.are_all_stopped() and self.are_any_created(),
+			"start_url" : "/manifests/start",
+			"kill_url" : "/manifests/kill",
+			"destroy_url" : "/manifests/destroy"
 		}

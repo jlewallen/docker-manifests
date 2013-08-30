@@ -1,11 +1,19 @@
 <div class="manifest" ng-show="model">
-  <h2>{{model.manifest.path}}</h2>
 
-	<button class="btn btn-info" ng-click="start()">Start</button>
-	<button class="btn btn-warning" ng-click="kill()" ng-show="model.can_kill">Kill</button>
-	<button class="btn btn-danger" ng-click="destroy()" ng-show="model.can_destroy">Destroy</button>
+  <div class="actions-main">
+    <div class="actions-rare">
+      <button class="btn btn-danger" ng-click="recreate()">Recreate</button>
+    </div>
+    <div class="actions-standard">
+      <button class="btn btn-info" ng-click="start()">Start</button>
+      <button class="btn btn-warning" ng-click="kill()" ng-show="model.can_kill">Kill</button>
+      <button class="btn btn-danger" ng-click="destroy()" ng-show="model.can_destroy">Destroy</button>
+    </div>
+  </div>
 
   <div ng-repeat="manifest in model.manifests" class="manifest">
+    <h3>{{model.manifest.path}}</h3>
+
 		<div ng-repeat="group in manifest.groups" class="group">
 
 			<h4>{{group.name}}</h4>

@@ -31,17 +31,29 @@ def index():
 def status():
   return jsonify(get_web().to_status_json())
 
+@app.route('/manifests/start', methods=['POST'])
+def startManifests():
+  return jsonify(get_web().startManifests())
+
+@app.route('/manifests/kill', methods=['POST'])
+def killManifests():
+  return jsonify(get_web().killManifests())
+
+@app.route('/manifests/destroy', methods=['POST'])
+def destroyManifests():
+  return jsonify(get_web().destroyManifests())
+
 @app.route('/manifests/<int:id>/start', methods=['POST'])
 def startManifest(id):
-  return jsonify(get_web().startManifest())
+  return jsonify(get_web().startManifest(id))
 
 @app.route('/manifests/<int:id>/kill', methods=['POST'])
 def killManifest(id):
-  return jsonify(get_web().killManifest())
+  return jsonify(get_web().killManifest(id))
 
 @app.route('/manifests/<int:id>/destroy', methods=['POST'])
 def destroyManifest(id):
-  return jsonify(get_web().destroyManifest())
+  return jsonify(get_web().destroyManifest(id))
 
 @app.route('/groups/<string:name>/start', methods=['POST'])
 def startGroup(name):

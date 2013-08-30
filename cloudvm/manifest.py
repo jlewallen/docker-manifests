@@ -32,8 +32,10 @@ class Manifest:
 		return {
 			'name' : self.name,
 			'groups' : map(lambda g: g.to_json(), self.groups),
-			'all_stopped' : self.are_all_stopped(),
-			'any_running' : self.are_any_running(),
+      "all_running" : self.are_all_running(),
+      "any_running" : self.are_any_running(),
+      "all_created" : self.are_all_created(),
+      "any_created" : self.are_any_created(),
 			"start_url" : "/manifests/0/start",
 			"kill_url" : "/manifests/0/kill",
 			"destroy_url" : "/manifests/0/destroy"
@@ -86,8 +88,17 @@ class Manifest:
 	def update(self, ctx):
 		map(lambda group: group.update(ctx), self.groups)
 
+	def are_all_running(self):
+		return reduce(lambda memo, group: memo and group.are_all_running(), self.groups, True)
+
 	def are_all_stopped(self):
 		return reduce(lambda memo, group: memo and group.are_all_stopped(), self.groups, True)
+
+	def are_all_created(self):
+		return reduce(lambda memo, group: memo and group.are_all_created(), self.groups, True)
+
+	def are_any_created(self):
+		return reduce(lambda memo, group: memo or group.are_any_created(), self.groups, False)
 
 	def are_any_running(self):
 		return reduce(lambda memo, group: memo or group.are_any_running(), self.groups, False)

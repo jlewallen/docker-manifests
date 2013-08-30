@@ -112,6 +112,18 @@ function IndexController($scope, $rootScope, $http, dockerService) {
     });
   }
 
+  $scope.recreate = function() {
+    post($scope.model.kill_url).success(function(data) {
+      store(data);
+      post($scope.model.destroy_url).success(function(data) {
+        store(data);
+        post($scope.model.start_url).success(function(data) {
+          store(data);
+        });
+      });
+    });
+  }
+
   $scope.startGroup = function(group) {
     post(group.start_url).success(function(data) {
 			store(data);
