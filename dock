@@ -19,6 +19,7 @@ def get_options():
 	parser.add_option("--delete-images", action="store_true", dest="delete_images", default=False, help="delete images")
 	parser.add_option("--delete-exited", action="store_true", dest="delete_exited", default=False, help="delete exited")
 	parser.add_option("--kill-all", action="store_true", dest="kill_all", default=False, help="kill all")
+	parser.add_option("--recreate", action="store_true", dest="recreate", default=False, help="stop or kill, destroy and create instances")
 	parser.add_option("--stop", action="store_true", dest="stop", default=False, help="stop instances")
 	parser.add_option("--kill", action="store_true", dest="kill", default=False, help="kill instances")
 	parser.add_option("--web", action="store_true", dest="web", default=False, help="run web server")
@@ -54,7 +55,14 @@ def main():
 	for path in options.manifests:
 		ctx.state.purge(ctx)
 		manifest = Manifest.load(path, ctx)
-		if options.stop:
+		if options.recreate:
+			if options.kill:
+				manifest.kill(ctx)
+			else:
+				manifest.stop(ctx)
+			manifest.destroy(ctx)
+			manifest.provision(ctx)
+		elif options.stop:
 			manifest.stop(ctx)
 		elif options.kill:
 			manifest.kill(ctx)
