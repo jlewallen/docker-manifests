@@ -1,19 +1,31 @@
 'use strict';
 
+
 angular.module("dashboard", []).
   config(['$routeProvider', '$locationProvider', function($routeProvider, $locationProvider) {
     $routeProvider.when('/', {
-      templateUrl: 'static/partials/landing.html',
+      templateUrl: '/static/partials/landing.html',
       controller: IndexController
-    }).
-    otherwise({
+    });
+    $routeProvider.when('/instances/:name/logs', {
+      templateUrl: '/static/partials/logs.html',
+      controller: LogsController
+    });
+    $routeProvider.otherwise({
       redirectTo: '/'
     });
-    $locationProvider.html5Mode(true);
+    // $locationProvider.html5Mode(true);
 }]);
 
 function LayoutCtrl($rootScope) {
 	$rootScope.busy = true;
+}
+
+function LogsController($scope, $routeParams, $rootScope, $http) {
+	$http.get("/instances/" + $routeParams.name + "/logs").success(function(data) {
+    $scope.model = { logs : data };
+    $rootScope.busy = false;
+  });
 }
 
 function IndexController($scope, $rootScope, $http) {

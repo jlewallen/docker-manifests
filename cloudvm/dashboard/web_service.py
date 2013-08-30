@@ -56,6 +56,14 @@ class WebService:
 		self.ctx.state.purge(self.ctx)
 		self.ctx.save()
 
+	def instanceLogs(self, name):
+		for manifest in self.manifests:
+			for group in manifest.groups:
+				for instance in group.instances:
+					if instance.name == name:
+						return self.ctx.docker.logs(instance.short_id)
+		raise "No such instance"
+
 	def to_status_json(self):
 		return {
       'machine' : self.machine.to_json(),

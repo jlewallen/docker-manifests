@@ -59,6 +59,10 @@ def destroyGroup(name):
 def resizeGroup(name):
 	return jsonify(get_web().resizeGroup(name, int(request.args['size'])))
 
+@app.route('/instances/<string:name>/logs', methods=['GET'])
+def instanceLogs(name):
+	return get_web().instanceLogs(name)
+
 @app.route('/favicon.ico')
 def favicon():
   return send_from_directory(os.path.join(app.root_path, 'static'), 'img/favicon.ico')

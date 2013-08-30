@@ -23,3 +23,9 @@ html {
 	width: 31px;
   height: 31px;
 }
+
+.logs {
+  white-space: pre;
+  font-family: monospace;
+  font-size: 11px;
+}

@@ -28,18 +28,19 @@
 					<tr>
 						<th> ID </th>
 						<td> {{instance.short_id}} </td>
+            <th> <a href="#/instances/{{instance.name}}/logs">Logs</a> </th>
 					</tr>
 					<tr>
 						<th> IP </th>
-						<td> {{instance.ip}} </td>
+						<td colspan="2"> {{instance.ip}} </td>
 					</tr>
 					<tr>
 						<th> Created </th>
-						<td> {{instance.created_at}} </td>
+						<td colspan="2"> {{instance.created_at}} </td>
 					</tr>
 					<tr>
 						<th> Started </th>
-						<td> {{instance.started_at}} </td>
+						<td colspan="2"> {{instance.started_at}} </td>
 					</tr>
 				</table>
 
