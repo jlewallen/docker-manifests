@@ -11,8 +11,11 @@ class WebService:
 		self.ctx = Context(self.docker, None, self.state)
 		self.manifests = [Manifest.load(path, self.ctx, id) for id, path in enumerate(options.manifests)]
 		self.machine = HostMachine()
-		map(lambda manifest: manifest.update(self.ctx), self.manifests)
+		self.update()
 		self.ctx.state.purge(self.ctx)
+
+	def update(self):
+		map(lambda manifest: manifest.update(self.ctx), self.manifests)
 
 	def manifest(self, id):
 		return self.manifests[id]
@@ -73,6 +76,7 @@ class WebService:
 
 	def start(self):
 		self.ctx.reload()
+		self.update()
 		self.ctx.state.purge(self.ctx)
 
 	def save(self):
