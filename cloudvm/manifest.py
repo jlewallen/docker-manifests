@@ -9,14 +9,15 @@ from group import *
 log = logging.getLogger('dock')
 
 class Manifest:
-	def __init__(self, name):
+	def __init__(self, name, id):
 		self.name = name
 		self.groups = []
+		self.id = id
 
 	@staticmethod
-	def load(path, ctx):
+	def load(path, ctx, id=0):
 		manifest_cfg = json.load(open(path))
-		manifest = Manifest(path)
+		manifest = Manifest(path, id)
 		for group_name in manifest_cfg:
 			group_cfg = manifest_cfg[group_name]
 			template = group_cfg["template"]
@@ -36,10 +37,19 @@ class Manifest:
       "any_running" : self.are_any_running(),
       "all_created" : self.are_all_created(),
       "any_created" : self.are_any_created(),
-			"start_url" : "/manifests/0/start",
-			"kill_url" : "/manifests/0/kill",
-			"destroy_url" : "/manifests/0/destroy"
+			"start_url" : self.start_url(),
+			"kill_url" : self.kill_url(),
+			"destroy_url" : self.destroy_url()
 		}
+
+	def start_url(self):
+		return "/manifests/%d/start" % self.id
+
+	def kill_url(self):
+		return "/manifests/%d/kill" % self.id
+
+	def destroy_url(self):
+		return "/manifests/%d/destroy" % self.id
 
 	def provision(self, ctx):
 		self.update(ctx)

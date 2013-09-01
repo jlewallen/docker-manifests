@@ -25,11 +25,15 @@ def get_web():
 
 @app.route("/")
 def index():
-  return make_response(open('cloudvm/dashboard/templates/index.html').read())
+	return make_response(open('cloudvm/dashboard/templates/index.html').read())
+
+@app.route('/manifests/recreate', methods=['GET'])
+def recreateAll():
+	return jsonify(get_web().recreateAll())
 
 @app.route("/status")
 def status():
-  return jsonify(get_web().to_status_json())
+	return jsonify(get_web().to_status_json())
 
 @app.route('/manifests/start', methods=['POST'])
 def startManifests():

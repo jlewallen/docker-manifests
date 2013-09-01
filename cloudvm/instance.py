@@ -186,6 +186,18 @@ class Instance:
 			self.pid = None
 			self.assigned_ip = None
 
+	def stop_url(self):
+		return "/instances/%s/stop" % self.name
+
+	def kill_url(self):
+		return "/instances/%s/kill" % self.name
+
+	def destroy_url(self):
+		return "/instances/%s/destroy" % self.name
+
+	def start_url(self):
+		return "/instances/%s/start" % self.name
+
 	def to_json(self):
 		return {
 			"name" : self.name,
@@ -197,8 +209,8 @@ class Instance:
 			"created_at" : self.created_at,
 			"started_at" : self.started_at,
 			"pid" : self.pid,
-			"start_url" : "/instances/%s/start" % self.name,
-			"stop_url" : "/instances/%s/stop" % self.name,
-			"destroy_url" : "/instances/%s/destroy" % self.name,
-			"kill_url" : "/instances/%s/kill" % self.name
+			"start_url" : self.start_url(),
+			"stop_url" : self.stop_url(),
+			"destroy_url" : self.destroy_url(),
+			"kill_url" : self.kill_url()
 		}

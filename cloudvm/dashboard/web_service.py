@@ -9,10 +9,17 @@ class WebService:
 		self.docker = Context.get_docker()
 		self.state = State.load(options.state_file_path)
 		self.ctx = Context(self.docker, None, self.state)
-		self.manifests = map(lambda path: Manifest.load(path, self.ctx), options.manifests)
+		self.manifests = [Manifest.load(path, self.ctx, id) for id, path in enumerate(options.manifests)]
 		self.machine = HostMachine()
 		map(lambda manifest: manifest.update(self.ctx), self.manifests)
 		self.ctx.state.purge(self.ctx)
+
+	def manifest(self, id):
+		return self.manifests[id]
+
+	def recreateAll(self):
+		steps = [manifest.kill_url() for manifest in self.manifests] + [manifest.destroy_url() for manifest in self.manifests] + [manifest.start_url() for manifest in self.manifests]
+		return { "steps" : steps }
 
 	def startManifests(self):
 		map(lambda manifest: manifest.provision(self.ctx), self.manifests)
@@ -30,17 +37,17 @@ class WebService:
 		return self.to_status_json()
 
 	def startManifest(self, id):
-		map(lambda manifest: manifest.provision(self.ctx), self.manifests)
+		self.manifest(id).provision(self.ctx)
 		self.save()
 		return self.to_status_json()
 
 	def killManifest(self, id):
-		map(lambda manifest: manifest.kill(self.ctx), self.manifests)
+		self.manifest(id).kill(self.ctx)
 		self.save()
 		return self.to_status_json()
 
 	def destroyManifest(self, id):
-		map(lambda manifest: manifest.destroy(self.ctx), self.manifests)
+		self.manifest(id).destroy(self.ctx)
 		self.save()
 		return self.to_status_json()
 

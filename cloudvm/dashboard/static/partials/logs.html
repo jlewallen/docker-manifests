@@ -1,1 +1,18 @@
+<div class="floating-panel">
+  <div class="panel" ng-class="{ 'panel-success': model.instance.running, created: model.instance.created }">
+    <div class="panel-heading">
+      <h3 class="panel-title">{{model.instance.name}}</h3>
+    </div>
+    <table class="table" ng-show="model.instance">
+      <tr>
+        <th> ID </th>
+        <td> {{model.instance.short_id}} </td>
+      </tr>
+      <tr>
+        <th> IP </th>
+        <td> {{model.instance.ip}} </td>
+      </tr>
+    </table>
+  </div>
+</div>
 <div class="logs">{{model.logs}}</div>
