@@ -17,12 +17,17 @@ var app = angular.module("dashboard", [ 'ngRoute' ]).
 }]);
 
 app.config(function($httpProvider) {
-  $httpProvider.interceptors.push(function($q) {
+  $httpProvider.interceptors.push(function($q, $rootScope) {
     return {
       'request': function(config) {
+				$rootScope.outstandingXhr = $rootScope.outstandingXhr || [];
+				$rootScope.outstandingXhr.push(true);
+				$rootScope.busy = _.any($rootScope.outstandingXhr);
         return config;
       },
       'response': function(response) {
+				$rootScope.outstandingXhr.pop();
+				$rootScope.busy = _.any($rootScope.outstandingXhr);
         return response;
       }
     }
@@ -40,7 +45,7 @@ app.service("dockerService", function($http) {
   };
 
   this.getInstance = function(name, callback) {
-    self.refresh().success(function(data) {
+    return self.refresh().success(function(data) {
       var instances = _.reduce(_.flatten(_.map(self.model.manifests, function(m) {
         return _.map(m.groups, function(g) {
           return g.instances;
@@ -59,28 +64,23 @@ app.service("dockerService", function($http) {
   };
 });
 
-function LayoutCtrl($rootScope, $http) {
-	$rootScope.busy = true; // Make a stack for concurrent busy, or even an angular http interceptor
+function LayoutCtrl() {
+
 }
 
-function LogsController($scope, $routeParams, $rootScope, $http, dockerService) {
-  $rootScope.busy = true;
+function LogsController($scope, $routeParams, $http, dockerService) {
   $scope.model = { };
 	dockerService.getLogs($routeParams.name).success(function(data) {
     $scope.model.logs = data;
-    $rootScope.busy = false;
   });
   dockerService.getInstance($routeParams.name, function(data) {
     $scope.model.instance = data;
-    $rootScope.busy = false;
   });
 }
 
-function IndexController($scope, $rootScope, $http, dockerService) {
+function IndexController($scope, $http, dockerService) {
   function post(url) {
-    $rootScope.busy = true;
     return $http.post(url).success(function(data) {
-      $rootScope.busy = false;
     });
   }
 
@@ -88,10 +88,8 @@ function IndexController($scope, $rootScope, $http, dockerService) {
     $scope.model = data;
 	}
 
-  $rootScope.busy = true;
   dockerService.refresh().success(function(data) {
 		store(data);
-    $rootScope.busy = false;
   });
 
   $scope.start = function() {
