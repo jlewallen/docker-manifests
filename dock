@@ -6,6 +6,7 @@
 import os
 import optparse
 import re
+import logging
 
 from cloudvm.models import *
 
@@ -28,6 +29,9 @@ def get_options():
 	return Options(vars(raw_options), args)
 
 def main():
+	formatting = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+	logging.basicConfig(format = formatting, stream = sys.stdout, level = logging.INFO)
+
 	options = get_options()
 	docker = Context.get_docker()
 

@@ -17,9 +17,6 @@ log = logging.getLogger('dock')
 
 class Context:
 	def __init__(self, docker, cfg, state):
-		formatting = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-		logging.basicConfig(format = formatting, stream = sys.stdout, level = logging.INFO)
-
 		self.docker = docker
 		self.cfg = cfg
 		self.state = state
@@ -27,6 +24,10 @@ class Context:
 
 	def update(self, group_name, name, instance):
 		self.state.update(group_name, name, instance)
+
+	def reload(self):
+		if self.state:
+			self.state = self.state.reload()
 
 	def save(self):
 		if self.state: self.state.save()
@@ -51,7 +52,7 @@ class State:
 	def purge(self, ctx):
 		for name, instance in self.containers.items():
 			if not instance.exists(ctx.docker):
-				log.info("purging %s" % name)
+				log.info("%s: purging" % name)
 				del self.containers[name]
 				for group_name in self.groups:
 					group = self.groups.get(group_name)
@@ -66,6 +67,9 @@ class State:
 
 	def get(self, long_id):
 		return self.containers.get(long_id)
+
+	def reload(self):
+		return State.load(self.path)
 
 	def save(self):
 		pickle.dump(self, open(self.path, "wb"))

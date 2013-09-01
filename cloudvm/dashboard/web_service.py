@@ -72,6 +72,7 @@ class WebService:
 		return self.to_status_json()
 
 	def start(self):
+		self.ctx.reload()
 		self.ctx.state.purge(self.ctx)
 
 	def save(self):
