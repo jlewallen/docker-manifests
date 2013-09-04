@@ -1,6 +1,22 @@
 #!/bin/bash
 
+set -e
+
 HOST=`hostname`
 echo "127.0.0.1 $HOST" >> /etc/hosts
+
+curl -s http://172.17.42.1:5000/my/user-data
+curl -s http://172.17.42.1:5000/my/catalina.properties
+
+FILE=/opt/tomcat/conf/catalina.properties
+if [ -n "$CLOUD_PROPERTIES" ]; then
+  if curl -f -s -o /dev/null --head $CLOUD_PROPERTIES; then
+    curl -s $CLOUD_PROPERTIES >> $FILE
+  else
+    echo "No environment."
+  fi
+else
+  echo "No environment."
+fi
 
 /opt/tomcat/bin/catalina.sh run

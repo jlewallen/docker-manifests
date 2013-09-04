@@ -4,6 +4,7 @@
 
 import json
 import os
+import logging
 
 from urlparse import urlparse
 from flask import Flask, request, Response, _app_ctx_stack, current_app
@@ -12,6 +13,8 @@ from flask import send_file, make_response, abort
 from flask import jsonify, json
 
 from cloudvm.dashboard.web_service import WebService
+
+log = logging.getLogger('dock')
 
 app = Flask(__name__)
 app.debug = True
@@ -78,6 +81,18 @@ def resizeGroup(name):
 @app.route('/instances/<string:name>/logs', methods=['GET'])
 def instanceLogs(name):
 	return get_web().instanceLogs(name)
+
+@app.route('/instances/<string:name>/<path:path>', methods=['GET'])
+def instanceFileByName(name, path):
+	return get_web().instanceEnv(name, path)
+
+@app.route("/my/<path:path>")
+def instanceFile(path):
+	try:
+		return get_web().instanceEnv(request.remote_addr, path)
+	except Exception, e:
+		log.warn("%s for %s/%s", e.message, request.remote_addr, path)
+		return '', 404
 
 @app.route('/favicon.ico')
 def favicon():

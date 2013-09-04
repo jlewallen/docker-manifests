@@ -3,15 +3,17 @@
     <div class="panel-heading">
       <h3 class="panel-title">{{model.instance.name}}</h3>
     </div>
-    <table class="table" ng-show="model.instance">
+    <table class="table table-condensed" ng-show="model.instance">
+			<tbody>
       <tr>
         <th> ID </th>
         <td> {{model.instance.short_id}} </td>
       </tr>
-      <tr>
+			<tr ng-show="instance.ip">
         <th> IP </th>
         <td> {{model.instance.ip}} </td>
       </tr>
+			</tbody>
     </table>
   </div>
 </div>

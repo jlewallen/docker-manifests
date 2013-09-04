@@ -29,6 +29,7 @@ class Instance:
 		self.interface = None
 		self.running = False
 		self.created = False
+		self.details = None
 
 	@staticmethod
 	def new_id(size=6, chars=string.ascii_uppercase + string.digits):
@@ -54,6 +55,7 @@ class Instance:
 
 	def make_params(self, group_type):
 		env = dict((self.env.items() if self.env else []) + group_type.environment(self).items())
+		log.info("%s: env %s" % (self.name, env))
 		hostname = self.assigned_ip
 		if not self.assigned_ip:
 			hostname = Networking.get_offset_ip(0)
@@ -172,17 +174,21 @@ class Instance:
 		self.created = self.exists(ctx.docker)
 		if self.created:
 			details = ctx.docker.inspect_container(self.short_id)
-			self.long_id = details['ID']
 			self.running = self.is_running(ctx.docker)
+			self.details = details
+			self.long_id = details['ID']
 			self.started_at = details['State']['StartedAt']
 			self.created_at = details['Created']
+			self.docker_ip = details['NetworkSettings']['IPAddress']
 			self.pid = details['State']['Pid']
 		else:
+			self.running = False
+			self.details = None
 			self.long_id = None
 			self.short_id = None
-			self.running = False
 			self.started_at = None
 			self.created_at = None
+			self.docker_ip = None
 			self.pid = None
 			self.assigned_ip = None
 
@@ -204,11 +210,13 @@ class Instance:
 			"short_id" : self.short_id,
 			"long_id" : self.long_id,
 			"ip" : self.assigned_ip,
+			"docker_ip" : self.docker_ip,
 			"running" : self.running,
 			"created" : self.created,
 			"created_at" : self.created_at,
 			"started_at" : self.started_at,
 			"pid" : self.pid,
+			"details" : self.details,
 			"start_url" : self.start_url(),
 			"stop_url" : self.stop_url(),
 			"destroy_url" : self.destroy_url(),

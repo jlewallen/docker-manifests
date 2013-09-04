@@ -2,6 +2,7 @@
 all:
 	docker pull ubuntu
 	for a in base tomcat eureka nginx cassandra zookeeper; do \
+    (echo $$a && docker rmi jlewallen/$$a) ;\
 		(echo $$a && cd images/$$a && docker build -t jlewallen/$$a . ) ; \
 	done
 
@@ -16,3 +17,7 @@ zookeeper: base
 
 cassandra: base
 		(echo cassandra && cd images/cassandra && docker build -t jlewallen/cassandra . ) ; \
+
+tomcat: base
+		docker rmi jlewallen/tomcat
+		(echo tomcat && cd images/tomcat && docker build -t jlewallen/tomcat . ) ; \

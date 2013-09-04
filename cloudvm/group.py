@@ -11,7 +11,10 @@ class GroupType:
 		self.group = group
 
 	def environment(self, instance):
-		return {}
+		return {
+			"CLOUD_PROPERTIES" : "http://%s:%s/instances/%s/meta/catalina.properties" % (Networking.get_local_ip(), "5000", instance.name),
+			"CLOUD_CONFIG" : "http://%s:%s/instances/%s" % (Networking.get_local_ip(), "5000", instance.name)
+		}
 
 	@staticmethod
 	def get(name):
@@ -24,14 +27,16 @@ class Cassandra(GroupType):
 		self.group = group
 
 	def environment(self, instance):
+		parent_env = super().environment(instance)
 		number = self.group.size()
 		tokens = [((2**64 / number) * i) - 2**63 for i in range(number)]
-		return {
+		env = {
 			"CASS_SEEDS" : self.group.instances[0].assigned_ip,
 			"CASS_TOKEN" : tokens[instance.index],
 			"CASS_LOCAL_IP" : instance.assigned_ip,
 			"CASS_NAME" : self.group.name
 		}
+		return dict(parent_env.items() + env.items())
 
 class Group:
 	def __init__(self, name, type_name, template):

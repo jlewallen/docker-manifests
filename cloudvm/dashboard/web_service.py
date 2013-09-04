@@ -2,7 +2,68 @@
 #
 #
 
+import os
+
+from jinja2 import Template
 from cloudvm.models import *
+
+class MetaFile:
+	def __init__(self, path):
+		self.path = path
+
+	def generate(self, group, instance):
+		template = Template(open(self.path).read())
+		data = {
+			"machine" : {
+				"ip" : Networking.get_local_ip()
+			}
+		}
+		rendered = "# " + self.path + "\n"
+		rendered += template.render(data)
+		return rendered
+
+class MetaFiles:
+	def serve(self, group, instance, path):
+		files = []
+		for full_path in self._paths_for(group.name, instance.name, path):
+			if os.path.exists(full_path):
+				files.append(MetaFile(full_path))
+		merged = ""
+		for file in files:
+			merged += file.generate(group, instance)
+		return merged
+
+	def _paths_for(self, group_name, instance_name, path):
+		return [
+			"meta/%s" % (path),
+			"meta/%s/%s" % (group_name, path),
+			"meta/%s/%s/%s" % (group_name, instance_name, path)
+		]
+
+class Lookup:
+	def __init__(self, manifests):
+		self.manifests = manifests
+
+	def instance(self, name_or_ip):
+		for manifest in self.manifests:
+			for group in manifest.groups:
+				for instance in group.instances:
+					if name_or_ip in [ instance.name, instance.docker_ip, instance.assigned_ip ]:
+						return instance
+		raise Exception("No instance found using '%s'" % name_or_ip)
+
+	def group_for_instance(self, instance):
+		for manifest in self.manifests:
+			for group in manifest.groups:
+				if instance in group.instances: return group
+		raise Exception("No group found for %s" % instance.name)
+
+	def group_for(self, name):
+		for manifest in self.manifests:
+			for group in manifest.groups:
+				names = map(lambda i: i.name, group.instances)
+				if name in names: return group
+		raise "No group found for %s" % name
 
 class WebService:
 	def __init__(self, options):
@@ -16,6 +77,14 @@ class WebService:
 
 	def update(self):
 		map(lambda manifest: manifest.update(self.ctx), self.manifests)
+
+	def lookup(self):
+		return Lookup(self.manifests)
+
+	def instanceEnv(self, instance_name, path):
+		instance = self.lookup().instance(instance_name)
+		group = self.lookup().group_for_instance(instance)
+		return MetaFiles().serve(group, instance, path)
 
 	def manifest(self, id):
 		return self.manifests[id]

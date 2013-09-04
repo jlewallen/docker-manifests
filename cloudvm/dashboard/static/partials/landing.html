@@ -32,13 +32,13 @@
 					<h3 class="panel-title">{{instance.name}}</h3>
 				</div>
 
-				<table class="table" ng-show="instance.created">
+				<table class="table table-condensed" ng-show="instance.created">
 					<tr>
 						<th> ID </th>
 						<td> {{instance.short_id}} </td>
             <th> <a href="#/instances/{{instance.name}}/logs">Logs</a> </th>
 					</tr>
-					<tr>
+					<tr ng-show="instance.ip">
 						<th> IP </th>
 						<td colspan="2"> {{instance.ip}} </td>
 					</tr>
