@@ -3,4 +3,4 @@
 HOST=`hostname`
 echo "127.0.0.1 $HOST" >> /etc/hosts
 
-/opt/zookeeper/bin/zkServer.sh start-foreground
+/opt/tomcat/bin/catalina.sh run

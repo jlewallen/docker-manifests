@@ -1,4 +1,4 @@
-from jlewallen/base
+from jlewallen/tomcat
 
 maintainer Jacob Lewallen
 
@@ -12,6 +12,12 @@ run chmod 755 /opt/zookeeper/bin/start
 run mkdir -p /opt/zookeeper/conf
 run cp /opt/zookeeper/conf/zoo_sample.cfg /opt/zookeeper/conf/zoo.cfg
 
+run mkdir /opt/zkdata
+run mkdir /opt/zklogs
+add exhibitor.war /opt/tomcat/webapps/exhibitor.war
+add exhibitor.properties /opt/exhibitor.properties
+
+expose 8888
 expose 2181
 
 entrypoint [ "/opt/zookeeper/bin/start" ]
