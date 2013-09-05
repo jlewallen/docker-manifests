@@ -19,6 +19,8 @@ add exhibitor.properties /opt/exhibitor.properties
 
 expose 8888
 expose 2181
+expose 2888
+expose 3888
 
 entrypoint [ "/opt/zookeeper/bin/start" ]
 
