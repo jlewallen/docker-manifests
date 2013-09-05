@@ -1,10 +1,11 @@
-from jlewallen/base
+FROM jlewallen/base
 
-maintainer Jacob Lewallen
+MAINTAINER Jacob Lewallen
 
-add start /opt/tomcat/bin/start
-run chmod 755 /opt/tomcat/bin/start
+ADD startup /docker/startup/00-tomcat
+RUN chmod 755 /docker/startup/00-tomcat
 
-expose 8080
+EXPOSE 8080
 
-entrypoint ["/opt/tomcat/bin/start"]
+CMD "/opt/tomcat/bin/catalina.sh run"
+

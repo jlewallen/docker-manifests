@@ -1,11 +1,10 @@
-from jlewallen/base
+FROM jlewallen/base
 
-maintainer Jacob Lewallen
+MAINTAINER Jacob Lewallen
 
-run apt-get install -y nginx
-add nginx-default /etc/nginx/sites-available/default
+RUN apt-get install -y nginx
+ADD nginx-default /etc/nginx/sites-available/default
 
-expose 80
+EXPOSE 80
 
-entrypoint ["/usr/sbin/nginx"]
-cmd ["-g", "daemon off;"]
+CMD ["/usr/sbin/nginx", "-g", "daemon off;"]

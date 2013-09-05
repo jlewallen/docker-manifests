@@ -2,10 +2,10 @@
 
 set -e
 
-HOST=`hostname`
-echo "127.0.0.1 $HOST" >> /etc/hosts
-
+echo http://172.17.42.1:5000/my/user-data
 curl -s http://172.17.42.1:5000/my/user-data
+
+echo http://172.17.42.1:5000/my/catalina.properties
 curl -s http://172.17.42.1:5000/my/catalina.properties
 
 FILE=/opt/tomcat/conf/catalina.properties
@@ -19,4 +19,3 @@ else
   echo "No environment."
 fi
 
-/opt/tomcat/bin/catalina.sh run
