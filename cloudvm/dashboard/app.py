@@ -30,6 +30,14 @@ def get_web():
 def index():
 	return make_response(open('cloudvm/dashboard/templates/index.html').read())
 
+@app.route('/manifests/<string:name>', methods=['POST'])
+def addManifest(name):
+	return jsonify(get_web().addManifest(name, request.data))
+
+@app.route('/manifests/clear', methods=['POST'])
+def clearManifests():
+	return jsonify(get_web().clearManifests())
+
 @app.route('/manifests/recreate', methods=['GET'])
 def recreateAll():
 	return jsonify(get_web().recreateAll())

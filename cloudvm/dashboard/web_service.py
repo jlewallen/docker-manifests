@@ -70,7 +70,7 @@ class WebService:
 		self.docker = Context.get_docker()
 		self.state = State.load(options.state_file_path)
 		self.ctx = Context(self.docker, None, self.state)
-		self.manifests = [Manifest.load(path, self.ctx, id) for id, path in enumerate(options.manifests)]
+		self.manifests = [Manifest.fromFile(path, self.ctx, id) for id, path in enumerate(options.manifests)]
 		self.machine = HostMachine()
 		self.update()
 		self.ctx.state.purge(self.ctx)
@@ -159,6 +159,20 @@ class WebService:
 					if instance.name == name:
 						return self.ctx.docker.logs(instance.short_id)
 		raise "No such instance"
+
+	def addManifest(self, name, json):
+		self.manifests.append(Manifest.fromJson(name, json, self.ctx, len(self.manifests)))
+		self.ctx.reload()
+		self.update()
+		self.save()
+		return self.to_status_json()
+
+	def clearManifests(self):
+		self.manifests = []
+		self.ctx.reload()
+		self.update()
+		self.save()
+		return self.to_status_json()
 
 	def are_all_stopped(self):
 		return reduce(lambda value, manifest: value and manifest.are_all_stopped(), self.manifests, True)

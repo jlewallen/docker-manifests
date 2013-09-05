@@ -6,7 +6,7 @@ from instance import *
 
 log = logging.getLogger('dock')
 
-class GroupType:
+class GroupType(object):
 	def __init__(self, group):
 		self.group = group
 
@@ -27,7 +27,7 @@ class Cassandra(GroupType):
 		self.group = group
 
 	def environment(self, instance):
-		parent_env = super().environment(instance)
+		parent_env = super(Cassandra, self).environment(instance)
 		number = self.group.size()
 		tokens = [((2**64 / number) * i) - 2**63 for i in range(number)]
 		env = {

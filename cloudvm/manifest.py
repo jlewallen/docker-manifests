@@ -15,9 +15,9 @@ class Manifest:
 		self.id = id
 
 	@staticmethod
-	def load(path, ctx, id=0):
-		manifest_cfg = json.load(open(path))
-		manifest = Manifest(path, id)
+	def fromJson(name, jsonString, ctx, id=0):
+		manifest_cfg = json.loads(jsonString)
+		manifest = Manifest(name, id)
 		for group_name in manifest_cfg:
 			group_cfg = manifest_cfg[group_name]
 			template = group_cfg["template"]
@@ -28,6 +28,10 @@ class Manifest:
 			group.resize(ctx, number)
 			manifest.groups.append(group)
 		return manifest
+
+	@staticmethod
+	def fromPath(path, ctx, id=0):
+		return fromJson(path, open(path), ctx, id)
 
 	def to_json(self):
 		return {
