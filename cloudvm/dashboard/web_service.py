@@ -25,7 +25,7 @@ class MetaFile:
 class MetaFiles:
 	def serve(self, group, instance, path):
 		files = []
-		for full_path in self._paths_for(group.name, instance.name, path):
+		for full_path in self._paths_for(group, instance, path):
 			if os.path.exists(full_path):
 				files.append(MetaFile(full_path))
 		merged = ""
@@ -33,24 +33,30 @@ class MetaFiles:
 			merged += file.generate(group, instance)
 		return merged
 
-	def _paths_for(self, group_name, instance_name, path):
-		return [
-			"meta/%s" % (path),
-			"meta/%s/%s" % (group_name, path),
-			"meta/%s/%s/%s" % (group_name, instance_name, path)
-		]
+	def _paths_for(self, group, instance, path):
+		paths = [ "meta/%s" % (path) ]
+		if group:
+			paths.append("meta/%s/%s" % (group.name, path))
+			if instance:
+				paths.append("meta/%s/%s/%s" % (group.name, instance.name, path))
+		return paths
 
 class Lookup:
 	def __init__(self, manifests):
 		self.manifests = manifests
 
-	def instance(self, name_or_ip):
+	def has_instance(self, name_or_ip):
+		return self.instance(name_or_ip, False) != None
+
+	def instance(self, name_or_ip, throw=True):
 		for manifest in self.manifests:
 			for group in manifest.groups:
 				for instance in group.instances:
 					if name_or_ip in [ instance.name, instance.docker_ip, instance.assigned_ip ]:
 						return instance
-		raise Exception("No instance found using '%s'" % name_or_ip)
+		if throw:
+			raise Exception("No instance found using '%s'" % name_or_ip)
+		return None
 
 	def group_for_instance(self, instance):
 		for manifest in self.manifests:
@@ -82,9 +88,11 @@ class WebService:
 		return Lookup(self.manifests)
 
 	def instanceEnv(self, instance_name, path):
-		instance = self.lookup().instance(instance_name)
-		group = self.lookup().group_for_instance(instance)
-		return MetaFiles().serve(group, instance, path)
+		if self.lookup().has_instance(instance_name):
+			instance = self.lookup().instance(instance_name)
+			group = self.lookup().group_for_instance(instance)
+			return MetaFiles().serve(group, instance, path)
+		return MetaFiles().serve(None, None, path)
 
 	def manifest(self, id):
 		return self.manifests[id]
