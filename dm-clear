@@ -1,0 +1,5 @@
+#!/bin/bash
+
+curl -s -X POST http://127.0.0.1:5000/manifests/kill > /dev/null
+curl -s -X POST http://127.0.0.1:5000/manifests/destroy > /dev/null
+curl -s -X POST http://127.0.0.1:5000/manifests/clear > /dev/null

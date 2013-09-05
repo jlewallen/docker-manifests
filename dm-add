@@ -1,0 +1,7 @@
+#!/bin/bash
+
+if [ -n "$1" ]; then
+  FILE=$1
+  NAME=`basename $1`
+  curl -s -X POST -H "Content-Type: application/json" --data-binary @$FILE http://127.0.0.1:5000/manifests/$NAME
+fi
