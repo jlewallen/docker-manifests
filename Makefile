@@ -21,3 +21,7 @@ cassandra: base
 tomcat: base
 		docker rmi jlewallen/tomcat
 		(echo tomcat && cd images/tomcat && docker build -t jlewallen/tomcat . ) ; \
+
+gerrit: base
+		docker rmi jlewallen/gerrit
+		(echo gerrit && cd images/gerrit && docker build -t jlewallen/gerrit . ) ; \
